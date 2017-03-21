@@ -90,6 +90,10 @@ void printArc(MyArc *G[][MAXNODE],int maxrow,int maxcol);
  */
 
 int mylpsolve(void);
+/**
+ * setArcId
+ * 设置在线性规划中，边的编号，按上三角的顺序，按照遇到的边的顺序递增编号，边编号从0开始
+ * */
 void setArcId(MyArc *G[][MAXNODE],int maxrow,int maxcol);
 void joinArr(double c[], int sc,double a[5],int sa, double b[], int sb);
 void printArr(double a[],int m);
@@ -101,7 +105,7 @@ void printArr(double a[],int m);
 void setArcId(MyArc *G[][MAXNODE],int maxrow,int maxcol){
     int i,j,k;
     printf("\n network node link info\n");
-    for(i=0,k=1; i<maxrow; ++i){
+    for(i=0,k=0; i<maxrow; ++i){
         //注意由于给的无向图，所以一半就行
         for(j=i; j<maxcol; ++j){
             if(G[i][j]!=NULL){
@@ -222,6 +226,28 @@ void joinArr(double c[], int sc,double a[5],int sa, double b[], int sb){
     printf("看看sc=%d,sa=%d,sb=%d\n",sc,sa,sb);
     */
 }
+//void joinArr(double c[], int sc,double a[],int sa, double b[], int sb){
+//    int i,j;
+//    for(i=0;i<info[0];++i){
+//        c[i]=-DOUBLE_MAX;
+//    }
+//    //形参不能计算数组大小，因为是指针
+//    for(i=0,j=3*info[0]+1;i<sa;++i,++j){
+//        c[j]=a[i];
+//    }
+//    for(i=0;i<sb;++i,++j){
+//        c[j]=b[i];
+//    }
+//    for(i=0;i<sb;++i,++j){
+//        c[j]=b[i];
+//    }
+//    c[5*info[0]+2*info[1]+1]=-DOUBLE_MAX;
+//    /*for(i=0;i<sc;++i){
+//        printf("%.0f, ",c[i]);
+//    }
+//    printf("看看sc=%d,sa=%d,sb=%d\n",sc,sa,sb);
+//    */
+//}
 
 void printArr(double a[],int m){
     int i;
