@@ -100,7 +100,7 @@ bool solveLp(){
     double vx[1+info[0]], ex[info[1]];
     //vx
     for(i=1; i<=info[0]; ++i){
-        vx[i]=info[3];
+        vx[i]=info[3]*SERVER_VAL_PARA;
     }
 
     //ex
@@ -148,8 +148,8 @@ bool solveLp(){
 
             }
         }
-        /**服务器约束,中间节点服务器流入流量=节点流出流量*/
-        b[i+1]=-2000;
+        /**服务器约束,中间节点服务器流入流量=超源节点流出流量*/
+        b[i+1]=-MAX_VALUE_SUPER_OUT;
         //连接消费节点,由于节点索引从0开始，所以+1
         //printArr(b,1+2*info[0]+2*info[1]);
         //EQ变为LE
