@@ -1,10 +1,15 @@
 #ifndef __ROUTE_H__
 #define __ROUTE_H__
 
+#include <vector>
 #include "lib_io.h"
-#define DOUBLE_MAX 1e12
+#include "lpkit.h"
+#define MIN_VALUE 0.01
+
 void deploy_server(char * graph[MAX_EDGE_NUM], int edge_num, char * filename);
-void solveLp();
+bool solveLp();
+void getServeLocation(lprec *lp);
+void printVector(std::vector<int> v);
 	
 
 #endif

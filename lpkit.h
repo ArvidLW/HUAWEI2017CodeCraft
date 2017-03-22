@@ -1,10 +1,5 @@
-/*
-  Main header file of the LP_SOLVE toolkit.
-  
-  By Jeroen Dirks, 21-2-95
-
-  include this file in your program and link with liblps.a
-*/
+#ifndef __LPKIT_H__
+#define __LPKIT_H__
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -449,6 +444,8 @@ void set_globals(lprec *lp);
 void ftran(int start, int end, REAL *pcol);
 void btran(REAL *row);
 void invert(void);
+
+#endif
 
 
 

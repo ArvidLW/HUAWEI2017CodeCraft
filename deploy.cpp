@@ -18,9 +18,15 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //printArc(gNet,info[0],info[0]);
     //printArc(cNet,info[2],info[0]);
 
-
     //testLinearP();
-    solveLp();
+
+    if(solveLp()){
+        printVector(serverID);
+    }
+
+
+
+
     std::cout << "Hello, World!" << std::endl;
 
 	// 需要输出的内容
@@ -67,7 +73,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
  * 这样总的变量为5*info[0]+1+2*info[1]+1=5*info[0]+2+2*info[1]
  * @return  [description]
  */
-void solveLp(){
+bool solveLp(){
     /**lpsolve建立开始**********/
     lprec *lp;
     lp = make_lp(0,2*info[0]+2*info[1]);
@@ -189,7 +195,7 @@ void solveLp(){
 //    /**整数约束结束***/
 //    /**{0,1}约束开始***/
 //    for(i=1;i<=info[0];++i){
-//        set_binary(lp, i, TRUE);
+//        set_int(lp, i, TRUE);
 //    }
 //    printf("{0,1}约束执行成功\n");
 //    /**{0,1}约束结束***/
@@ -202,7 +208,25 @@ void solveLp(){
     //print_objective(lp);
     print_solution(lp);
     printf("run success\n");
+    getServeLocation(lp);
+    return true;
 
+}
+
+void getServeLocation(lprec *lp){
+    for(int i=1;i<=info[0];++i){
+        //浮点!=0判断，如果大于MIN_VALUE则变量值不为0，记为服务器位置，记录服务器编号
+        if((double)lp->best_solution[lp->rows+i] > MIN_VALUE ){
+            serverID.push_back(i-1);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+        }
+    }
+}
+
+void printVector(std::vector<int> v){
+    for(int i=0;i<(signed)v.size();++i){
+        std::cout<< v[i] << " ";
+    }
+    std::cout<<std::endl;
 }
 
 
