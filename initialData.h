@@ -60,6 +60,11 @@ int netNode[2][MAXNODE]={0};
  * serverID存放服务器节点编号
  * */
 std::vector<int> serverID;
+/**
+ * serverCandidate存放服务器节点编号,candidate
+ * */
+std::vector<int> serverCandidate;
+
 
 /**
  * 功能总入口

@@ -31,8 +31,10 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     }else{
         printf("Server count: %d\n",serverID.size());
     }
-
+    std::cout<<"ServerID:";
     printVector(serverID);
+    std::cout<<"ServerCandidate:";
+    printVector(serverCandidate);
 
 
 
@@ -426,8 +428,11 @@ bool solveLp(){
 void getServeLocation(lprec *lp){
     for(int i=1;i<=info[0];++i){
         //浮点!=0判断，如果大于MIN_VALUE则变量值不为0，记为服务器位置，记录服务器编号
-        if((double)lp->best_solution[lp->rows+i] > MIN_VALUE ){
+        if((double)lp->best_solution[lp->rows+i] >= MIN_VALUE ){
             serverID.push_back(i-1);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+        }
+        if((double)lp->best_solution[lp->rows+i] >= MIN_VALUE_ZERO ){
+            serverCandidate.push_back(i-1);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
         }
     }
 }
