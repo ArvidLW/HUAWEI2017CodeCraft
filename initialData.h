@@ -56,7 +56,9 @@ MyArc *cNet[MAXCONSUMER][MAXNODE]={nullptr};
 
 int consumerNode[MAXCONSUMER]={0};
 int netNode[2][MAXNODE]={0};
-
+/**
+ * serverID存放服务器节点编号
+ * */
 std::vector<int> serverID;
 
 /**

@@ -4,6 +4,9 @@
 #include "initialData.h"
 #include "lpkit.h"
 #include <vector>
+//#define MODE1 //设定了超源节点变量，缺点，变量多了，不好计算
+//#define MODE2 //取消了超源节点变量，并合并了f_{i,j}的双向流量，变为单向，缺点，不好确定服务器位置
+#define MODE3 //取消了超源节点变量，合并到网络节点流量差约束中，info[0]+2info[1]个变量，约束为info[0]+2*info[1]个
 //你要完成的功能总入口
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 {
@@ -84,6 +87,164 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 bool solveLp(){
     /**lpsolve建立开始**********/
     lprec *lp;
+#ifdef MODE3
+    lp = make_lp(0,info[0]+2*info[1]);
+
+    /**lpsolve建立结束**********/
+    /**目标函数开始************/
+    double myoj[1+info[0]+2*info[1]];
+    memset(myoj,0,sizeof(myoj));
+    int i,j,k;
+    double vx[1+info[0]], ex[info[1]];
+    //vx
+    for(i=1; i<=info[0]; ++i){
+        vx[i]=info[3];
+    }
+
+    //ex
+    for(i=0,k=0; i<info[0]; ++i){
+        for(j=i; j<info[0]; ++j){
+            if(gNet[i][j]!=NULL){
+                ex[k]=gNet[i][j]->unitcost;
+                ++k;
+            }
+
+        }
+    }
+    //拼接数组
+    printf("s0:%0.0f\n",myoj[1]);
+    joinArr(myoj,1+info[0]+2*info[1],vx,1+info[0],ex,info[1]);
+    printf("s1:%0.0f\n",myoj[1]);
+    printArr(myoj,1+info[0]+2*info[1]);
+    printf("s2\n");
+    //加入到lp中
+    set_obj_fn(lp, myoj);
+    //print_lp(lp);
+    printf("object function set successful!\n");
+    /**目标函数结束**********/
+
+    /**约束条件开始**********/
+    /**网络节点流量差为0约束开始***/
+    double b[1+info[0]+2*info[1]];
+    /**约束*/
+    //若只加与消费节点相连的网络节点约束，但这样中间节点流量差不为0目标值会比实际小
+    for(i=0;i<info[0];++i){
+        //i=consumerNode[k];
+        memset(b,0,sizeof(b));
+        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
+        for(j=0;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                //访问时索引不用加1
+                if(i<j){
+                    b[info[0]+gNet[i][j]->n ]=1;//正向
+                    b[info[0]+info[1]+gNet[i][j]->n ]=-1;//反向
+                }
+                else{
+                    b[info[0]+info[1]+gNet[i][j]->n ]=1;//正向
+                    b[info[0]+gNet[i][j]->n ]=-1;//反向
+                }
+
+            }
+        }
+        /**服务器约束,中间节点服务器流入流量=节点流出流量*/
+        b[i+1]=-2000;
+        //连接消费节点,由于节点索引从0开始，所以+1
+        //printArr(b,1+2*info[0]+2*info[1]);
+        //EQ变为LE
+        add_constraint(lp, b, LE, (-1)*netNode[1][i]);
+
+    }
+    printf("network node flow is 0 constraint success!\n");
+    /**网络节点流量差为0约束结束***/
+    /**网络链路流量取值约束开始***/
+    for(i=0;i<info[0];++i){
+        for(j=i;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                set_upbo(lp, info[0]+gNet[i][j]->n, gNet[i][j]->capacity);
+                set_upbo(lp, info[0]+info[1]+gNet[i][j]->n, gNet[i][j]->capacity);
+            }
+        }
+    }
+    printf("network road capacity value constraint success!\n");
+    /**网络链路流量取值约束结束***/
+
+    /**约束条件结束**********/
+#endif
+#ifdef MODE2
+    lp=make_lp(0,info[0]+info[1]);
+    double myoj[1+info[0]+info[1]];
+    memset(myoj,0,sizeof(myoj));
+    int i,j,k;
+    //目标
+    double vx[1+info[0]], ex[info[1]];
+    //vx
+    for(i=1; i<=info[0]; ++i){
+        vx[i]=info[3];
+    }
+
+    //ex
+    for(i=0,k=0; i<info[0]; ++i){
+        for(j=i; j<info[0]; ++j){
+            if(gNet[i][j]!=NULL){
+                ex[k]=gNet[i][j]->unitcost;
+                ++k;
+            }
+
+        }
+    }
+    //拼接
+    for(i=0;i<1+info[0];++i){
+        myoj[i]=vx[i];
+    }
+    for(;i<1+info[0]+info[1];++i){
+        myoj[i]=ex[i];
+    }
+    set_obj_fn(lp, myoj);
+
+    /**消费节点需求约束条件*/
+    double b[1+info[0]+info[1]];
+
+    for(k=0;k<info[3];++k){
+        i=consumerNode[k];
+        memset(b,0,sizeof(b));
+        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
+        for(j=0;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                //访问时索引不用加1
+                b[info[0]+gNet[i][j]->n ]=1;//正向
+
+            }
+        }
+        //大于消费节点需求
+        //printArr(b,1+2*info[0]+2*info[1]);
+        add_constraint(lp, b, GE, netNode[1][i]);
+
+    }
+    /**网络链路流量取值约束开始***/
+    for(i=0;i<info[0];++i){
+        for(j=i;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                set_upbo(lp, info[0]+gNet[i][j]->n, gNet[i][j]->capacity);
+            }
+        }
+    }
+    /**服务器与节点的关系约束*/
+    for(i=0;i<info[0];++i){
+        memset(b,0,sizeof(b));
+        for(j=0;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                //访问时索引不用加1
+                b[info[0]+gNet[i][j]->n ]=1;//正向
+
+
+            }
+        }
+        b[i+1]=-2000;
+        add_constraint(lp, b, LE, 0);
+        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
+    }
+#endif
+#ifdef MODE1
     lp = make_lp(0,2*info[0]+2*info[1]);
 
     /**lpsolve建立结束**********/
@@ -124,37 +285,10 @@ bool solveLp(){
     double b[1+2*info[0]+2*info[1]];
 
     //结点i连接网络节点,注意超源节点会流向它
-//    for(i=0;i<info[0];++i){
-//        /*if(netNode[0][i]==-1){
-//            continue;
-//        }*/
-//        memset(b,0,sizeof(b));
-//        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
-//        for(j=0;j<info[0];++j){
-//            if(gNet[i][j]!=NULL){
-//                //访问时索引不用加1
-//                if(i<j){
-//                    b[info[0]+gNet[i][j]->n ]=1;//正向
-//                    b[info[0]+info[1]+gNet[i][j]->n ]=-1;//反向
-//                }
-//                else{
-//                    b[info[0]+info[1]+gNet[i][j]->n ]=1;//正向
-//                    b[info[0]+gNet[i][j]->n ]=-1;//反向
-//                }
-//
-//            }
-//        }
-//        //超源节点流入
-//        b[info[0]+2*info[1]+i+1]=-1;
-//        //连接消费节点,由于节点索引从0开始，所以+1
-//        //printArr(b,1+2*info[0]+2*info[1]);
-//        //EQ变为LE
-//        add_constraint(lp, b, LE, (-1)*netNode[1][i]);
-//        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
-//    }
-    //只用加与消费节点相连的网络节点约束
-    for(k=0;k<info[3];++k){
-        i=consumerNode[k];
+    for(i=0;i<info[0];++i){
+        /*if(netNode[0][i]==-1){
+            continue;
+        }*/
         memset(b,0,sizeof(b));
         //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
         for(j=0;j<info[0];++j){
@@ -177,8 +311,35 @@ bool solveLp(){
         //printArr(b,1+2*info[0]+2*info[1]);
         //EQ变为LE
         add_constraint(lp, b, LE, (-1)*netNode[1][i]);
-
+        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
     }
+    //与上相比只加与消费节点相连的网络节点约束，但是有可能网络节点的流量差不为零，使原有目标比实际小
+//    for(k=0;k<info[3];++k){
+//        i=consumerNode[k];
+//        memset(b,0,sizeof(b));
+//        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
+//        for(j=0;j<info[0];++j){
+//            if(gNet[i][j]!=NULL){
+//                //访问时索引不用加1
+//                if(i<j){
+//                    b[info[0]+gNet[i][j]->n ]=1;//正向
+//                    b[info[0]+info[1]+gNet[i][j]->n ]=-1;//反向
+//                }
+//                else{
+//                    b[info[0]+info[1]+gNet[i][j]->n ]=1;//正向
+//                    b[info[0]+gNet[i][j]->n ]=-1;//反向
+//                }
+//
+//            }
+//        }
+//        //超源节点流入
+//        b[info[0]+2*info[1]+i+1]=-1;
+//        //连接消费节点,由于节点索引从0开始，所以+1
+//        //printArr(b,1+2*info[0]+2*info[1]);
+//        //EQ变为LE
+//        add_constraint(lp, b, LE, (-1)*netNode[1][i]);
+//
+//    }
     printf("network node flow is 0 constraint success!\n");
     /**网络节点流量差为0约束结束***/
     /**网络链路流量取值约束开始***/
@@ -248,7 +409,7 @@ bool solveLp(){
 //    /**{0,1}约束结束***/
 
     /**约束条件结束**********/
-
+#endif
     //set_timeout(lp, 60);
     //set_simplextype(lp, SIMPLEX_PRIMAL_DUAL);
     //reset_basis(lp);
