@@ -11,7 +11,7 @@
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 {
     //printInput(topo,line_num);
-    //memset(netNode, -1, sizeof(netNode[0]));//用于初始化标记网络节点所连接的消费节点
+    memset(netNode[0], -1, sizeof(netNode[0]));//用于初始化标记网络节点所连接的消费节点
     //获取文件第一行信息输出，方便查看对应文件正确性
     getInfo(topo);
     //初始化gNet与cNet
