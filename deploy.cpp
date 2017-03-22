@@ -8,6 +8,7 @@
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 {
     //printInput(topo,line_num);
+    //memset(netNode, -1, sizeof(netNode[0]));//用于初始化标记网络节点所连接的消费节点
     //获取文件第一行信息输出，方便查看对应文件正确性
     getInfo(topo);
     //初始化gNet与cNet
@@ -123,7 +124,37 @@ bool solveLp(){
     double b[1+2*info[0]+2*info[1]];
 
     //结点i连接网络节点,注意超源节点会流向它
-    for(i=0;i<info[0];++i){
+//    for(i=0;i<info[0];++i){
+//        /*if(netNode[0][i]==-1){
+//            continue;
+//        }*/
+//        memset(b,0,sizeof(b));
+//        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
+//        for(j=0;j<info[0];++j){
+//            if(gNet[i][j]!=NULL){
+//                //访问时索引不用加1
+//                if(i<j){
+//                    b[info[0]+gNet[i][j]->n ]=1;//正向
+//                    b[info[0]+info[1]+gNet[i][j]->n ]=-1;//反向
+//                }
+//                else{
+//                    b[info[0]+info[1]+gNet[i][j]->n ]=1;//正向
+//                    b[info[0]+gNet[i][j]->n ]=-1;//反向
+//                }
+//
+//            }
+//        }
+//        //超源节点流入
+//        b[info[0]+2*info[1]+i+1]=-1;
+//        //连接消费节点,由于节点索引从0开始，所以+1
+//        //printArr(b,1+2*info[0]+2*info[1]);
+//        //EQ变为LE
+//        add_constraint(lp, b, LE, (-1)*netNode[1][i]);
+//        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
+//    }
+    //只用加与消费节点相连的网络节点约束
+    for(k=0;k<info[3];++k){
+        i=consumerNode[k];
         memset(b,0,sizeof(b));
         //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
         for(j=0;j<info[0];++j){
@@ -146,7 +177,7 @@ bool solveLp(){
         //printArr(b,1+2*info[0]+2*info[1]);
         //EQ变为LE
         add_constraint(lp, b, LE, (-1)*netNode[1][i]);
-        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
+
     }
     printf("network node flow is 0 constraint success!\n");
     /**网络节点流量差为0约束结束***/

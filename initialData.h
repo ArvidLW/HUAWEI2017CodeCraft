@@ -174,7 +174,7 @@ void cNetBuild(char * topo[MAX_EDGE_NUM]){
         }
         MyArc *p=(MyArc *)calloc(1,sizeof(MyArc));
         p->capacity=tmp[2];
-        p->iswithconsumer=1;
+        p->iswithconsumer=true;
         cNet[tmp[0] ][tmp[1] ]=p;
         //赋值另一半
         //printf("A::%d,,,,,,%d\n",tmp[0],tmp[1]);
