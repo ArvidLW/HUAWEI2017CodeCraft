@@ -177,7 +177,9 @@ void cNetBuild(char * topo[MAX_EDGE_NUM]){
         p->iswithconsumer=1;
         cNet[tmp[0] ][tmp[1] ]=p;
         //赋值另一半
-        cNet[tmp[1] ][tmp[0] ]=p;
+        //printf("A::%d,,,,,,%d\n",tmp[0],tmp[1]);
+        //cNet[tmp[1] ][tmp[0] ]=p;
+        //printf("B::%d,,,,,,%d\n",tmp[0],tmp[1]);
 
         consumerNode[tmp[0] ]=tmp[1];
         netNode[0][tmp[1] ]=tmp[0];

@@ -20,9 +20,16 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 
     //testLinearP();
 
-    if(solveLp()){
-        printVector(serverID);
+    solveLp();
+    if(serverID.size()<=0){
+        printf("not find server location!\n");
+        exit(-1);
+    }else{
+        printf("Server count: %d\n",serverID.size());
     }
+
+    printVector(serverID);
+
 
 
 
@@ -137,7 +144,8 @@ bool solveLp(){
         b[info[0]+2*info[1]+i+1]=-1;
         //连接消费节点,由于节点索引从0开始，所以+1
         //printArr(b,1+2*info[0]+2*info[1]);
-        add_constraint(lp, b, EQ, (-1)*netNode[1][i]);
+        //EQ变为LE
+        add_constraint(lp, b, LE, (-1)*netNode[1][i]);
         //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
     }
     printf("network node flow is 0 constraint success!\n");
@@ -146,10 +154,10 @@ bool solveLp(){
     for(i=0;i<info[0];++i){
         for(j=i;j<info[0];++j){
             if(gNet[i][j]!=NULL){
-                set_lowbo(lp, info[0]+gNet[i][j]->n, 0);
+//                set_lowbo(lp, info[0]+gNet[i][j]->n, 0);
                 set_upbo(lp, info[0]+gNet[i][j]->n, gNet[i][j]->capacity);
 
-                set_lowbo(lp, info[0]+info[1]+gNet[i][j]->n, 0);
+//                set_lowbo(lp, info[0]+info[1]+gNet[i][j]->n, 0);
                 set_upbo(lp, info[0]+info[1]+gNet[i][j]->n, gNet[i][j]->capacity);
             }
         }
@@ -159,10 +167,10 @@ bool solveLp(){
     /**网络链路与超源节点流量约束开始***/
     int usj=2000;
     for(i=1;i<info[0]+1;++i){
-        memset(b,0,sizeof(b));
-        b[i]=1;
-        b[i+info[0]+2*info[1]]=-1;
-        add_constraint(lp, b, LE, 0);
+//        memset(b,0,sizeof(b));
+//        b[i]=1;
+//        b[i+info[0]+2*info[1]]=-1;
+//        add_constraint(lp, b, LE, 0);
         //printf("----\n");
         //printArr(b,1+2*info[0]+2*info[1]);
         memset(b,0,sizeof(b));
@@ -175,17 +183,25 @@ bool solveLp(){
     printf("network link and super node constraint success!\n");
     /**网络链路与超源节点流量约束结束***/
     /**超源节点流量总值约束开始***/
-    memset(b,0,sizeof(b));
-    for(i=info[0]+2*info[1]+1;i<=2*info[0]+2*info[1];++i){
-        b[i]=1;
-    }
-    int total=0;
-    for(i=0;i<info[0];++i){
-        total=total+netNode[1][i];
-    }
-    add_constraint(lp, b, EQ, total);
-    printf("total=%d\n",total);
+//    memset(b,0,sizeof(b));
+//    for(i=info[0]+2*info[1]+1;i<=2*info[0]+2*info[1];++i){
+//        b[i]=1;
+//    }
+//    int total=0;
+//    for(i=0;i<info[0];++i){
+//        total=total+netNode[1][i];
+//    }
+//    //EQ改为GE,表示最小满足
+//    add_constraint(lp, b, GE, total);
+//    printf("total=%d\n",total);
     /**超源节点流量总值约束结束***/
+//    /**约束转换服务器节点标记加起来大于1，至少有一个为服务器，松约束**/
+//    memset(b,0,sizeof(b));
+//    for(i=1;i<=info[0];++i){
+//        b[i]=1;
+//    }
+//    add_constraint(lp, b, GE, 1);
+
 
 //    /**整数约束开始，不需要整数约束，因为边带宽为整数***/
 //    for(i=51;i<=2*info[0]+2*info[1];++i){
@@ -204,11 +220,13 @@ bool solveLp(){
 
     //set_timeout(lp, 60);
     //set_simplextype(lp, SIMPLEX_PRIMAL_DUAL);
+    //reset_basis(lp);
     solve(lp);
     //print_objective(lp);
     print_solution(lp);
     printf("run success\n");
     getServeLocation(lp);
+    delete_lp(lp);
     return true;
 
 }
