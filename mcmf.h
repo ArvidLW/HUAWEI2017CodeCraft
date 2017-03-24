@@ -165,7 +165,7 @@ struct MCMF
                 cout<<"NA\n"<<endl;
             }
             else{
-                sprintf(s,"%d\n",path_num);
+                sprintf(s,"%d\n\n",path_num);
                 for(Path pa : path)
                 {
                     pa.nodes.pop_front();
@@ -183,6 +183,7 @@ struct MCMF
                 }
                 cout<<s<<endl;
                 minicost+=serverID.size()*info[3];
+                cout<<minicost<<endl;
             }
         }
 

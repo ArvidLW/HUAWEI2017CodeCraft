@@ -28,7 +28,7 @@ typedef struct Link{
     int cap;
     int cost;
     int next;
-};//¼ÇÂ¼±ß
+};//è®°å½•è¾¹
 
 typedef struct PRE{
     int n;
@@ -37,7 +37,7 @@ typedef struct PRE{
         n=-1;
         e=-1;
     };
-};//¼ÇÂ¼Ç°ÇıµãÒÔ¼°ºÍÇ°Çıµã¹¹³ÉµÄ±ßºÅ
+};//è®°å½•å‰é©±ç‚¹ä»¥åŠå’Œå‰é©±ç‚¹æ„æˆçš„è¾¹å·
 
 typedef struct Path{
     int cost;

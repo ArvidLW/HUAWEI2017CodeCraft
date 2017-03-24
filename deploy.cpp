@@ -3,6 +3,7 @@
 #include "initialData.h"
 #include "lpkit.h"
 #include <vector>
+#include "mcmf.h"
 #include <iostream>
 //#define MODE1 //设定了超源节点变量，缺点，变量多了，不好计算
 //#define MODE2 //取消了超源节点变量，并合并了f_{i,j}的双向流量，变为单向，缺点，不好确定服务器位置
@@ -22,9 +23,15 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //printArc(gNet,info[0],info[0]);
     //printArc(cNet,info[2],info[0]);
 
-    //testLinearP();
+    /**lwlp*/
+    testLinearP();
 
-    solveLp();
+    /**线性规划*/
+    //solveLp();
+
+    /**整数规划*/
+    //mylpsolve();
+
     if(serverID.size()<=0){
         printf("not find server location!\n");
         exit(-1);
@@ -36,12 +43,14 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     std::cout<<"ServerCandidate:";
     printVector(serverCandidate);
 
-
-
+    MCMF mcmf;
+    mcmf.run(info[0],info[1]);
 
 
     std::cout << "Hello, World!" << std::endl;
 
+    char * topo_file = mcmf.s;
+    write_result(topo_file, filename);
 	// 需要输出的内容
 	//char * topo_file = (char *)"17\n\n0 8 0 20\n21 8 0 20\n9 11 1 13\n21 22 2 20\n23 22 2 8\n1 3 3 11\n24 3 3 17\n27 3 3 26\n24 3 3 10\n18 17 4 11\n1 19 5 26\n1 16 6 15\n15 13 7 13\n4 5 8 18\n2 25 9 15\n0 7 10 10\n23 24 11 23";
 
@@ -169,6 +178,14 @@ bool solveLp(){
     }
     printf("network road capacity value constraint success!\n");
     /**网络链路流量取值约束结束***/
+
+    /**整数约束结束***/
+    /**{0,1}约束开始***/
+    for(i=1;i<=info[0];++i){
+        set_int(lp, i, TRUE);
+    }
+    printf("{0,1}约束执行成功\n");
+    /**{0,1}约束结束***/
 
     /**约束条件结束**********/
 #endif
@@ -443,5 +460,145 @@ void printVector(std::vector<int> v){
     }
     std::cout<<std::endl;
 }
+int mylpsolve(void){
+    /**lpsolve建立开始**********/
+    lprec *lp;
+    lp = make_lp(0,2*info[0]+2*info[1]);
 
+    /**lpsolve建立结束**********/
+    /**目标函数开始************/
+    double myoj[1+info[0]+2*info[1]];
+    memset(myoj,0,sizeof(myoj));
+    int i,j,k;
+    double vx[1+info[0]], ex[info[1]];
+    //vx
+    for(i=1; i<=info[0]; ++i){
+        vx[i]=info[3];
+    }
+
+    //ex
+    for(i=0,k=0; i<info[0]; ++i){
+        for(j=i; j<info[0]; ++j){
+            if(gNet[i][j]!=NULL){
+                ex[k]=gNet[i][j]->unitcost;
+                ++k;
+            }
+
+        }
+    }
+    //拼接数组
+    joinArr(myoj,1+info[0]+2*info[1],vx,1+info[0],ex,info[1]);
+    printArr(myoj,1+info[0]+2*info[1]);
+    //加入到lp中
+    set_obj_fn(lp, myoj);
+    //print_lp(lp);
+    printf("目标函数,设置成功\n");
+    /**目标函数结束**********/
+
+    /**约束条件开始**********/
+    /**网络节点流量差为0约束开始***/
+    double b[1+2*info[0]+2*info[1]];
+
+    //结点i连接网络节点,注意超源节点会流向它
+    for(i=0;i<info[0];++i){
+        memset(b,0,sizeof(b));
+        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
+        for(j=0;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                //访问时索引不用加1
+                if(i<j){
+                    b[info[0]+gNet[i][j]->n ]=1;//正向
+                    b[info[0]+info[1]+gNet[i][j]->n ]=-1;//反向
+                }
+                else{
+                    b[info[0]+info[1]+gNet[i][j]->n ]=1;//正向
+                    b[info[0]+gNet[i][j]->n ]=-1;//反向
+                }
+
+            }
+        }
+        //超源节点流入
+        b[info[0]+2*info[1]+i+1]=-1;
+        //连接消费节点,由于节点索引从0开始，所以+1
+        //printArr(b,1+2*info[0]+2*info[1]);
+        add_constraint(lp, b, EQ, (-1)*netNode[1][i]);
+        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
+    }
+    printf("网络节点流量差为0约束,执行成功\n");
+    /**网络节点流量差为0约束结束***/
+    /**网络链路流量取值约束开始***/
+    for(i=0;i<info[0];++i){
+        for(j=i;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                set_lowbo(lp, info[0]+gNet[i][j]->n, 0);
+                set_upbo(lp, info[0]+gNet[i][j]->n, gNet[i][j]->capacity);
+
+                set_lowbo(lp, info[0]+info[1]+gNet[i][j]->n, 0);
+                set_upbo(lp, info[0]+info[1]+gNet[i][j]->n, gNet[i][j]->capacity);
+            }
+        }
+    }
+    printf("网络链路流量取值约束,执行成功\n");
+    /**网络链路流量取值约束结束***/
+    /**网络链路与超源节点流量约束开始***/
+    int usj=2000;
+    for(i=1;i<info[0]+1;++i){
+        memset(b,0,sizeof(b));
+        b[i]=1;
+        b[i+info[0]+2*info[1]]=-1;
+        add_constraint(lp, b, LE, 0);
+
+        //printf("----\n");
+        //printArr(b,1+2*info[0]+2*info[1]);
+        memset(b,0,sizeof(b));
+        b[i]=usj;
+        b[i+info[0]+2*info[1]]=-1;
+        add_constraint(lp, b, GE, 0);
+        //printf("----\n");
+        //printArr(b,1+2*info[0]+2*info[1]);
+    }
+    printf("网络链路与超源节点流量约束,执行成功\n");
+    /**网络链路与超源节点流量约束结束***/
+    /**超源节点流量总值约束开始***/
+    memset(b,0,sizeof(b));
+    for(i=info[0]+2*info[1]+1;i<=2*info[0]+2*info[1];++i){
+        b[i]=1;
+    }
+    int total=0;
+    for(i=0;i<info[0];++i){
+        total=total+netNode[1][i];
+    }
+    add_constraint(lp, b, EQ, total);
+    printf("total=%d\n",total);
+    /**超源节点流量总值约束结束***/
+
+
+    /**整数约束开始***/
+    for(i=51;i<=2*info[0]+2*info[1];++i){
+        set_int(lp, i, TRUE);
+    }
+    printf("整数约束,执行成功\n");
+    /**整数约束结束***/
+    /**{0,1}约束开始***/
+    for(i=1;i<=info[0];++i){
+        set_int(lp, i, TRUE);
+    }
+    printf("{0,1}约束执行成功\n");
+    /**{0,1}约束结束***/
+
+    /**约束条件结束**********/
+    //set_timeout(lp, 60);
+    //set_simplextype(lp, SIMPLEX_PRIMAL_DUAL);
+    solve(lp);
+    //print_objective(lp);
+    print_solution(lp);
+    getServeLocation(lp);
+    delete_lp(lp);
+    printf("整数规划执行成功\n");
+
+
+
+
+    return 0;
+}
 

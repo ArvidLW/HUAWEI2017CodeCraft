@@ -13,6 +13,8 @@ void deploy_server(char * graph[MAX_EDGE_NUM], int edge_num, char * filename);
 bool solveLp();
 void getServeLocation(lprec *lp);
 void printVector(std::vector<int> v);
+int mylpsolve(void);
+void testLinearP();
 	
 
 #endif
