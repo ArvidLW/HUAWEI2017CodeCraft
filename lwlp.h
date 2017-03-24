@@ -7,6 +7,7 @@
 
 
 #include <iostream>
+#include <vector>
 
 struct LinearRe {
     std::vector<double> y_;//单纯形算子
