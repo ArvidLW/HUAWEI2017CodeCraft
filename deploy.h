@@ -14,7 +14,7 @@ bool solveLp();
 void getServeLocation(lprec *lp);
 void printVector(std::vector<int> v);
 int mylpsolve(void);
-void testLinearP();
+void lwlptest();
 	
 
 #endif

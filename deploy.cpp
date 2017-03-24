@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "initialData.h"
 #include "lpkit.h"
+#include "lwlp.h"
 #include <vector>
 #include "mcmf.h"
 #include <iostream>
@@ -24,7 +25,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //printArc(cNet,info[2],info[0]);
 
     /**lwlp*/
-    testLinearP();
+    lwlptest();
 
     /**线性规划*/
     //solveLp();
@@ -600,5 +601,95 @@ int mylpsolve(void){
 
 
     return 0;
+}
+//lwlptest
+void lwlptest(){
+    std::vector<std::vector<double> > matrix;
+    std::vector<double> row;
+    int varN=info[0]+2*info[1];
+    /**约束条件开始**********/
+    /**网络节点流量差为0约束开始***/
+    double b[varN+1];
+    //结点i连接网络节点,注意超源节点会流向它
+    for(int i=0;i<info[0];++i){
+        memset(b,0,sizeof(b));
+        //边编号从0开始
+        //注意这里没用j=i因为是要对每个节点的流入流出分析，而提供约束，由于上三角和下三角指的结点是一样的，所以都有n
+        for(int j=0;j<info[0];++j){
+            if(gNet[i][j]!=NULL){
+                //访问时索引不用加1
+                b[info[0]+gNet[i][j]->n ]=1.0/MAX_VALUE_SUPER_OUT;//正向->反向
+                b[info[0]+info[1]+gNet[i][j]->n ]=-1.0/MAX_VALUE_SUPER_OUT;//反向->正向
+            }
+        }
+        b[i]=1;
+        b[varN]=(-1)*netNode[1][i]/MAX_VALUE_SUPER_OUT;
+        std::vector<double> cons(&b[0],&b[varN+1]);
+        matrix.push_back(cons);
+        //连接消费节点,由于节点索引从0开始，所以+1
+        //printArr(b,varN);
+        //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
+    }
+    printf("netword flow 0 constraint set ok\n");
+    /**网络节点流量差为0约束结束***/
+
+    /**目标函数开始************/
+    double myoj[varN];
+    memset(myoj,0,sizeof(myoj));
+    int i,j,k;
+    //vx顶点变量系数矩阵，ex边变量系数矩阵
+    double vx[info[0]], ex[info[1]];
+    //vx
+    for(i=0; i<=info[0]; ++i){
+        vx[i]=info[3];
+    }
+    //ex
+    for(i=0,k=0; i<info[0]; ++i){
+        for(j=i; j<info[0]; ++j){
+            if(gNet[i][j]!=NULL){
+                ex[k]=gNet[i][j]->unitcost;
+                ++k;
+            }
+
+        }
+    }
+    //拼接数组
+    joinArr(myoj,varN,vx,info[0],ex,info[1]);
+    printArr(myoj,varN);
+    std::vector<double> oj(&myoj[0],&myoj[varN]);
+    printf("object function set ok \n");
+    /**目标函数结束**********/
+    LinearRe re=LinearRe(&matrix,&oj);
+    re.run();
+    //LinearProgrammingResult result=linearPSimplexM(matrix,oj);
+    //result.print();
+    //double vector
+    for(int i=1;i<info[0];++i){
+        //浮点!=0判断，如果大于MIN_VALUE则变量值不为0，记为服务器位置，记录服务器编号
+        if( -matrix[i][varN]>= MIN_VALUE ){
+            serverID.push_back(i-1);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+        }
+        if(-matrix[i][varN] >= MIN_VALUE_ZERO ){
+            serverCandidate.push_back(i-1);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+        }
+    }
+
+}
+void testlwlp(){
+    std::vector<std::vector<double >> matrix;
+    std::vector<double> m1={1,0,0,0,2,1,3,15};
+    std::vector<double> m2={0,1,0,0,1,1,1,12};
+    std::vector<double> m3={0,0,1,0,2,1,0,9};
+    std::vector<double> m4={0,0,0,1,0,1,-3,3};
+
+    matrix.push_back(m1);
+    matrix.push_back(m2);
+    matrix.push_back(m3);
+    matrix.push_back(m4);
+    double myoj[]={0,0,0,0,-4,-3,-5};
+    std::vector<double> oj(&myoj[0],&myoj[7]);
+    LinearRe re=LinearRe(&matrix,&oj);
+    re.run();
+
 }
 
