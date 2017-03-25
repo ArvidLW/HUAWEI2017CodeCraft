@@ -26,7 +26,7 @@
 #define MAX_VALUE_SUPER_OUT 2000.0  //用来设定超源节点与服务器位置关系，作为服务器最大输出系数
 #define SERVER_VAL_PARA 1.0         //服务器价格参数，用来变换服务器价格
 
-//#define WEDEBUG                   //用于打印基本信息与计算过程
+//#define WEDEBUG                     //用于打印基本信息与计算过程
 
 #include <string.h>
 #include <stdlib.h>

@@ -21,6 +21,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     Graph G;
     G.init(topo);
 
+    //ChooseServer::testlwlp();
     ChooseServer::lpChoose();
     printf("print out serverID :\n");
     ChooseServer::printVector(ChooseServer::serverID);

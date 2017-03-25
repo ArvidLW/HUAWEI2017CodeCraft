@@ -40,6 +40,7 @@ struct LinearRe {
     void chooseOut();
     void updateResource();
     void updateB_();
+    void updateOutFactor();
     LinearRe(std::vector<std::vector<double >> *matrixC,std::vector<double> *vectorO){
 
         mc=matrixC;
@@ -47,6 +48,7 @@ struct LinearRe {
         h=(signed)matrixC->size();
         l=(signed)(*matrixC)[0].size();
         s=(signed)vectorO->size();
+        printf("h=%d,l=%d,s=%d\n",h,l,s);
         numVar.resize(l);
         //最后一列为资源向量
         if(l!=s+1){
@@ -87,6 +89,11 @@ void LinearRe::run(){
         updateResource();
         //更新B_
         updateB_();
+
+        for(int i=0;i<(signed)B_.size();++i){
+            for(int j=0;j<(signed)B_.size();++j){
+            }
+        }
     }
 
 
@@ -116,12 +123,12 @@ bool LinearRe::z_NCal(){
     double min=0,checkNum;
     int inNumtmp{-1};
     for(int j=h;j<s;++j){
-        double s=0;
+        double t=0;
         for(int i=0;i<h;++i){
-            s=s+(*mc)[i][numVar[j]]*y_[i];
+            t=t+(*mc)[i][numVar[j]]*y_[i];
         }
         //选择检验数最小的，记录其位置
-        checkNum=(*co)[numVar[j] ]-s;
+        checkNum=(*co)[numVar[j] ]-t;
         if(checkNum<min){
             min=checkNum;
             inNumtmp=j;
@@ -194,12 +201,17 @@ void LinearRe::chooseOut(){
     outNum=outNumTmp;
     minAlpha1=min1;
 }
-
+//4.5更新换出的系数
+void LinearRe::updateOutFactor(){
+    for(int i=0;i<h;++i){
+        (*mc)[i][numVar[outNum]]=B_[i][outNum];
+    }
+}
 //5、更新资源向量,计算目标值，更换基变量位置并记录
 void LinearRe::updateResource(){
     for(int i=0;i<h;++i){
         (*mc)[i][l-1]=(*mc)[i][l-1]-minAlpha1*(*mc)[i][numVar[inNum] ];
-        // std::cout<<"mc: "<<(*mc)[i][l-1]<<std::endl;
+         //std::cout<<"mc: "<<(*mc)[i][l-1]<<std::endl;
     }
     //(*mc)[numVar[outNum]][l-1]=minAlpha1;
     (*mc)[outNum][l-1]=minAlpha1;
@@ -221,6 +233,7 @@ void LinearRe::updateB_(){
     }
     //上面全部转化负的，现在转换过来
     inVarFactor[outNum]=-inVarFactor[outNum];
+
     //左乘以B_进行行变换
     for(int i=0;i<h;++i){
         if(i!=outNum){
