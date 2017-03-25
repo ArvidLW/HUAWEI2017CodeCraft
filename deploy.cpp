@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vector>
 #include "Graph.h"
+#include "chooseServer.h"
 #include <iostream>
 
 //#define MODE1 //设定了超源节点变量，缺点，变量多了，不好计算
@@ -13,8 +14,11 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //printInput(topo,line_num);
     Graph G;
     G.init(topo);
+    //ChooseServer::testlwlp();
+    ChooseServer::lpChoose();
 
 }
+
 
 
 

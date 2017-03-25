@@ -46,31 +46,41 @@ struct Node{
     Node():isWithConsumer{false},consumerId{-1},require{0},arc{nullptr} {}
 };
 struct Graph {
-    int nodeCount;
-    int arcCount;
-    int consumerCount;
-    int serverFee;
+    static int nodeCount;
+    static int arcCount;
+    static int consumerCount;
+    static int serverFee;
 
-    Arc* gNet[MAXNODE][MAXNODE];
+    static Arc* gNet[MAXNODE][MAXNODE];
     /**邻接表头节点，可以查找服务节点对应消费节点*/
-    Node* netNode[MAXNODE];
+    static Node* netNode[MAXNODE];
     /**消费节点对应服务节点*/
-    int consumerNode[MAXCONSUMER];
-    Graph():nodeCount{0},arcCount{0},consumerCount{0},serverFee{MAXVALUE},
-            gNet{nullptr},netNode{nullptr},consumerNode{0} {}
+    static int consumerNode[MAXCONSUMER];
+//    Graph():nodeCount{0},arcCount{0},consumerCount{0},serverFee{MAXVALUE},
+//            gNet{nullptr},netNode{nullptr},consumerNode{0} {}
 
     void init(char * topo[]);
     void gNetBuild(char * topo[]);
     void getBaseInfo(char * topo[]);
     void netNodeBuild(char *topo[]);
-    void setArcId(Arc *G[][MAXNODE],int maxrow,int maxcol);
+    void setGNetArcId();
     void printGNet();
     void printNetNode();
     void printConsumerNode();
 };
+
+int Graph::nodeCount(0);
+int Graph::arcCount{0};
+int Graph::consumerCount{0};
+int Graph::serverFee{MAXVALUE};
+Arc* Graph::gNet[MAXNODE][MAXNODE]{nullptr};
+Node* Graph::netNode[MAXNODE]{nullptr};
+int Graph::consumerNode[MAXCONSUMER]{0};
+
 void Graph::init(char * topo[]) {
     getBaseInfo(topo);
     gNetBuild(topo);
+    setGNetArcId();
     netNodeBuild(topo);
 #ifdef WEDEBUG
     printGNet();
@@ -176,7 +186,8 @@ void Graph::printGNet(){
     for(int i=0;i<nodeCount;++i){
         for(int j=i;j<nodeCount;++j){
             if(gNet[i][j]!= nullptr){
-                printf("%d->%d,%d,%d\n",
+                printf("%d:%d->%d,%d,%d\n",
+                       gNet[i][j]->id,
                        gNet[i][j]->node0,
                        gNet[i][j]->node1,
                        gNet[i][j]->capacity,
@@ -186,7 +197,7 @@ void Graph::printGNet(){
     }
 }
 void Graph::printNetNode() {
-    printf("printNetNode! *********");
+    printf("printNetNode! *********\n");
     for(int i=0;i<nodeCount;++i){
         Arc *p=netNode[i]->arc;
         printf("the Node %d connect the nodes is: ",i);
@@ -203,8 +214,17 @@ void Graph::printConsumerNode(){
         printf("%d->%d",i,consumerNode[i]);
     }
 }
-//void Graph::getBaseInfo(char **topo) {}
-
-
+void Graph::setGNetArcId(){
+    printf("\n setArcID ****\n");
+    for(int i=0,k=0; i<nodeCount; ++i){
+        //注意由于给的无向图，所以一半就行
+        for(int j=i; j<nodeCount; ++j){
+            if(gNet[i][j]!=NULL){
+                gNet[i][j]->id=k;
+                ++k;
+            }
+        }
+    }
+}
 
 #endif //CDN_GRAPH_H
