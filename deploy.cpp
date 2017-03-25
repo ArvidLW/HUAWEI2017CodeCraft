@@ -25,10 +25,10 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //printArc(cNet,info[2],info[0]);
 
     /**lwlp*/
-    lwlptest();
+    //lwlptest();
 
     /**线性规划*/
-    //solveLp();
+    solveLp();
 
     /**整数规划*/
     //mylpsolve();
