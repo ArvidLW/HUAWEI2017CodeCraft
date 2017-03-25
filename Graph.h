@@ -1,27 +1,30 @@
-//
-// Created by lw_co on 2017/3/25.
-//
+/*
+ * Copyright 2017
+ *
+ * Graph.h
+ *
+ * 图信息
+ *
+ * Date: March 26, 2017
+ * Author: Wei Liu, Ling Bao, Shangyue Zhou
+ *
+ * $Id: Graph.h,v 0.1 2017/03/26 00:30:30 lw Exp $
+ *
+ */
 
 #ifndef CDN_GRAPH_H
 #define CDN_GRAPH_H
 
-#define MAXNODE 1000
-#define MAXCONSUMER 500
-#define MAXVALUE 1000.0
-#define WEDEBUG
-
-
-
 /**
-     * 边结点，横坐标为起始节点，纵坐标为结束节点，消费节点序号顺次增加。
-     * 包含：
-     * 开始节点，暂时不需要。
-     * 结束节点，暂时不需要。
-     * 容量/消费需求带宽
-     * 单价
-     * 消费节点编号，暂时不需要。
-     * 未知数序号,为矩阵中从左至右，从上至下边的序号
-     */
+ * 边结点，横坐标为起始节点，纵坐标为结束节点，消费节点序号顺次增加。
+ * 包含：
+ * 开始节点，暂时不需要。
+ * 结束节点，暂时不需要。
+ * 容量/消费需求带宽
+ * 单价
+ * 消费节点编号，暂时不需要。
+ * 未知数序号,为矩阵中从左至右，从上至下边的序号
+ */
 struct Arc{
     int node0;//begin
     int node1;//end
@@ -35,7 +38,7 @@ struct Arc{
  * isWithConsumer  该节点是否连接消费节点
  * consumerNum     消费节点编号
  * require         消费需求
- * */
+ */
 struct Node{
     bool isWithConsumer;
     int consumerId;

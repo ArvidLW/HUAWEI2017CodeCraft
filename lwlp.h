@@ -1,6 +1,16 @@
-//
-// Created by lw_co on 2017/3/21.
-//
+/*
+ * Copyright 2017
+ *
+ * lwlp.h
+ *
+ * 线性规划
+ *
+ * Date: March 26, 2017
+ * Author: Wei Liu, Ling Bao, Shangyue Zhou
+ *
+ * $Id: lwlp.h,v 0.1 2017/03/26 00:30:35 lw Exp $
+ *
+ */
 
 #ifndef CDN_LWLP_H
 #define CDN_LWLP_H

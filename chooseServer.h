@@ -1,10 +1,19 @@
-//
-// Created by lw on 3/25/17.
-//
+/*
+ * Copyright 2017
+ *
+ * chooseServer.h
+ *
+ * 初始服务器选择
+ *
+ * Date: March 26, 2017
+ * Author: Wei Liu, Ling Bao, Shangyue Zhou
+ *
+ * $Id: chooseServer.h,v 0.1 2017/03/26 00:22:35 lw Exp $
+ *
+ */
 
 #ifndef CDN_CHOOSESERVER_H
 #define CDN_CHOOSESERVER_H
-
 
 
 class ChooseServer {
@@ -26,6 +35,15 @@ std::vector<int> ChooseServer::serverCandidate;
 
 void ChooseServer::testlwlp() {
     std::vector<std::vector<double >> matrix;
+    std::vector<double> m1={1,0,120,210,150};
+    std::vector<double> m2={0,1,110,30,400};
+
+    matrix.push_back(m1);
+    matrix.push_back(m2);
+    double myoj[]={0,0,-143,60};
+    std::vector<double> oj(&myoj[0],&myoj[4]);
+
+    /* //case2
     std::vector<double> m1={1,0,0,0,2,1,3,15};
     std::vector<double> m2={0,1,0,0,1,1,1,12};
     std::vector<double> m3={0,0,1,0,2,1,0,9};
@@ -36,7 +54,7 @@ void ChooseServer::testlwlp() {
     matrix.push_back(m3);
     matrix.push_back(m4);
     double myoj[]={0,0,0,0,-4,-3,-5};
-    std::vector<double> oj(&myoj[0],&myoj[7]);
+    std::vector<double> oj(&myoj[0],&myoj[7]);*/
     LinearRe re=LinearRe(&matrix,&oj);
     re.run();
 }
@@ -136,6 +154,7 @@ void ChooseServer::printArr(double a[],int m){
 }
 
 void ChooseServer::printVector(std::vector<int> v){
+    printf("count is: %d\n",v.size());
     for(int i=0;i<(signed)v.size();++i){
         printf("%d, ",v[i]);
     }
