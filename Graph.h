@@ -11,8 +11,6 @@
 #define WEDEBUG
 
 
-#include <string.h>
-#include <stdlib.h>
 
 /**
      * 边结点，横坐标为起始节点，纵坐标为结束节点，消费节点序号顺次增加。

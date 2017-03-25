@@ -5,8 +5,6 @@
 #ifndef CDN_CHOOSESERVER_H
 #define CDN_CHOOSESERVER_H
 
-#include "lwlp.h"
-#include "common.h"
 
 
 class ChooseServer {

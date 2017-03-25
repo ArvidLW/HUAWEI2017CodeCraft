@@ -6,9 +6,6 @@
 #define CDN_LWLP_H
 
 
-#include <iostream>
-#include <vector>
-
 struct LinearRe {
     std::vector<double> y_;//单纯形算子
     std::vector<std::vector<double>> B_;//B逆，初始为单位矩阵，中间变换矩阵

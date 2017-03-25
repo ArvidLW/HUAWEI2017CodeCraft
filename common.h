@@ -19,8 +19,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
+#include <vector>
 #include "Graph.h"
+#include "lwlp.h"
 #include "chooseServer.h"
+
 
 
 
