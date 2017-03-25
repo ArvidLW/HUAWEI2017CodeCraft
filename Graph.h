@@ -7,7 +7,7 @@
 
 #define MAXNODE 1000
 #define MAXCONSUMER 500
-#define MAXVALUE 1000
+#define MAXVALUE 1000.0
 #define WEDEBUG
 
 
@@ -27,11 +27,11 @@
 struct Arc{
     int node0;//begin
     int node1;//end
-    int capacity;
-    int cost;
+    double capacity;
+    double cost;
     int id;
     Arc *next;
-    Arc(): node0{-1},node1{-1},capacity(0),cost(MAXVALUE),id{-1},next{nullptr} {}
+    Arc(): node0{-1},node1{-1},capacity(0.0),cost(MAXVALUE),id{-1},next{nullptr} {}
 };
 /**头节点
  * isWithConsumer  该节点是否连接消费节点
@@ -41,23 +41,22 @@ struct Arc{
 struct Node{
     bool isWithConsumer;
     int consumerId;
-    int require;
+    double require;
     Arc *arc;
-    Node():isWithConsumer{false},consumerId{-1},require{0},arc{nullptr} {}
+    Node():isWithConsumer{false},consumerId{-1},require{0.0},arc{nullptr} {}
 };
 struct Graph {
     static int nodeCount;
     static int arcCount;
     static int consumerCount;
-    static int serverFee;
+    static double serverFee;
 
     static Arc* gNet[MAXNODE][MAXNODE];
     /**邻接表头节点，可以查找服务节点对应消费节点*/
     static Node* netNode[MAXNODE];
     /**消费节点对应服务节点*/
     static int consumerNode[MAXCONSUMER];
-//    Graph():nodeCount{0},arcCount{0},consumerCount{0},serverFee{MAXVALUE},
-//            gNet{nullptr},netNode{nullptr},consumerNode{0} {}
+
 
     void init(char * topo[]);
     void gNetBuild(char * topo[]);
@@ -72,21 +71,20 @@ struct Graph {
 int Graph::nodeCount(0);
 int Graph::arcCount{0};
 int Graph::consumerCount{0};
-int Graph::serverFee{MAXVALUE};
+double Graph::serverFee{MAXVALUE};
 Arc* Graph::gNet[MAXNODE][MAXNODE]{nullptr};
 Node* Graph::netNode[MAXNODE]{nullptr};
 int Graph::consumerNode[MAXCONSUMER]{0};
 
 void Graph::init(char * topo[]) {
     getBaseInfo(topo);
+    netNodeBuild(topo);
     gNetBuild(topo);
     setGNetArcId();
-    netNodeBuild(topo);
 #ifdef WEDEBUG
     printGNet();
     printNetNode();
-    printNetNode();
-    printf("ssss");
+    printConsumerNode();
 #endif
 }
 void Graph::getBaseInfo(char * topo[]){
@@ -109,7 +107,7 @@ void Graph::getBaseInfo(char * topo[]){
     serverFee=atoi(topo[2]);
     //测试打印
     printf("basic info: network node count, Arc count, consumer count\n");
-    printf("basic info: %d,%d,%d,%d\n",nodeCount,arcCount,consumerCount,serverFee);
+    printf("basic info: %d,%d,%d,%.2f\n",nodeCount,arcCount,consumerCount,serverFee);
 
 }
 void Graph::gNetBuild(char * topo[]) {
@@ -135,14 +133,8 @@ void Graph::gNetBuild(char * topo[]) {
         /**adjoin table,head join*/
         p->node0=tmp[0];
         p->node1=tmp[1];
-        if(netNode[tmp[0]]!= nullptr){
-            p->next=netNode[tmp[0] ]->arc;
-            netNode[tmp[0]]->arc=p;
-        }else{
-            Node *d=(Node *)calloc(1,sizeof(Node));
-            d->arc=p;
-            netNode[tmp[0]]=d;
-        }
+        p->next=netNode[tmp[0] ]->arc;
+        netNode[tmp[0]]->arc=p;
 
 
         Arc *q=(Arc *)calloc(1,sizeof(Arc));
@@ -150,20 +142,16 @@ void Graph::gNetBuild(char * topo[]) {
         q->node1=tmp[0];
         q->node0=tmp[1];
         /**adjoin table,head join*/
-        if(netNode[tmp[1]]!= nullptr) {
-            q->next = netNode[tmp[1]]->arc;
-            netNode[tmp[1]]->arc=q;
-        }else{
-            Node *d=(Node *)calloc(1,sizeof(Node));
-            d->arc=q;
-            netNode[tmp[1]]=d;
-        }
+        q->next = netNode[tmp[1]]->arc;
+        netNode[tmp[1]]->arc=q;
     }
 }
 void Graph::netNodeBuild(char **topo) {
-    int i;
+    for(int i=0;i<nodeCount;++i){
+        netNode[i]=(Node *)calloc(1,sizeof(Node));
+    }
     char *r;
-    for(i=5+arcCount; i<5+arcCount+consumerCount;++i){
+    for(int i=5+arcCount; i<5+arcCount+consumerCount;++i){
         int tmp[3]={0};
         int k=0;
         r=strtok(topo[i]," ");
@@ -172,21 +160,19 @@ void Graph::netNodeBuild(char **topo) {
             r=strtok(NULL," ");
             ++k;
         }
-        Node *d=(Node *)calloc(1,sizeof(Node));
-        d->require=tmp[2];
-        d->isWithConsumer=true;
-        d->consumerId=tmp[0];
-        netNode[tmp[0]]=d;
+        netNode[tmp[1]]->require=tmp[2];
+        netNode[tmp[1]]->isWithConsumer=true;
+        netNode[tmp[1]]->consumerId=tmp[0];
 
         consumerNode[tmp[0]]=tmp[1];
     }
 }
 void Graph::printGNet(){
-    printf("gNet printf! *********");
+    printf("gNet printf! *********\n");
     for(int i=0;i<nodeCount;++i){
         for(int j=i;j<nodeCount;++j){
             if(gNet[i][j]!= nullptr){
-                printf("%d:%d->%d,%d,%d\n",
+                printf("%d:%d->%d,%.2f,%.2f\n",
                        gNet[i][j]->id,
                        gNet[i][j]->node0,
                        gNet[i][j]->node1,
@@ -209,9 +195,9 @@ void Graph::printNetNode() {
     }
 }
 void Graph::printConsumerNode(){
-    printf("printConsumerNode ! ***********");
+    printf("printConsumerNode ! ***********\n");
     for(int i=0;i<consumerCount;++i){
-        printf("%d->%d",i,consumerNode[i]);
+        printf("%d->%d,%.2f\n",i,consumerNode[i],netNode[consumerNode[i]]->require);
     }
 }
 void Graph::setGNetArcId(){

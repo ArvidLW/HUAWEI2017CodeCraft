@@ -123,9 +123,12 @@ bool LinearRe::z_NCal(){
     if(inNumtmp==-1){
         std::cout <<"gain the best result!"<<std::endl;
         std::cout <<"object:"<<object<<std::endl;
+
+#ifdef WEDEBUG
         for(int i=0; i<h;++i){
             printf("val_%d =%.2f\n",numVar[i],(*mc)[i][l-1]);
         }
+#endif
         return true;
     }
     inNum=inNumtmp;
@@ -235,3 +238,5 @@ void LinearRe::updateB_(){
 
 
 #endif //CDN_LWLP_H
+
+
