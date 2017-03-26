@@ -19,6 +19,8 @@
 struct LinearRe {
     std::vector<double> y_;//单纯形算子
     std::vector<std::vector<double>> B_;//B逆，初始为单位矩阵，中间变换矩阵
+    std::vector<double> Z_N;//用于存放检验数
+    std::vector<double> DetaN;//中间算子
     //std::vector<double> numB;//基向量相对位置对应编号
     //std::vector<double> numN;//非基向量对应编号
     std::vector<int> numVar;//基变量与非基变量，对应实际的位置编号，开始时前h个是基变量
@@ -26,6 +28,8 @@ struct LinearRe {
     std::vector<std::vector<double >> *mc;
     std::vector<double> *co;
     int h,l,s;
+    int min_in_loc{-1};
+    std::vector<int> Z_N_To_RLoc;
     double minAlpha1{0.0};
     double minAlpha{0.0};
     double object{0};
@@ -40,7 +44,10 @@ struct LinearRe {
     void chooseOut();
     void updateResource();
     void updateB_();
-    void updateOutFactor();
+    void init();
+    void colDetaN();
+    void updateZ_N();
+    bool chooseBaseCol();
     LinearRe(std::vector<std::vector<double >> *matrixC,std::vector<double> *vectorO){
 
         mc=matrixC;
@@ -57,10 +64,13 @@ struct LinearRe {
         }
         y_.resize(h);
         B_.resize(h);
+        Z_N.resize(h);
+        Z_N_To_RLoc.resize(h);
         inVarFactor.resize(h);
         for(int i=0;i<h;++i){
             B_[i].resize(h);
             B_[i][i]=1;
+            Z_N_To_RLoc[i]=-1;
         }
         for(int i=0;i< l;++i){
             numVar[i]=i;
@@ -70,36 +80,37 @@ struct LinearRe {
 
 };
 
-
+void LinearRe::init() {
+    //计算单纯形算子
+    y_Cal();
+    //计算初始检验数
+    z_NCal();
+}
 void LinearRe::run(){
     while(1){
-        //算子
-        y_Cal();
-        //检验数与换出变量
-        if(z_NCal()){
+        //确定主元列标
+        if(chooseBaseCol()==true){
             break;
         }
+
         //更新系数
         updateFactor();
         //换出变量
         chooseOut();
-        //更新换出变量系数
-        //updateOutFactor();
         //更新资源向量，计算目标值
         updateResource();
+        //计算DetaN
+        colDetaN();
+        //更新检验数
+        updateZ_N();
         //更新B_
         updateB_();
-
-        for(int i=0;i<(signed)B_.size();++i){
-            for(int j=0;j<(signed)B_.size();++j){
-            }
-        }
     }
 
 
 }
 
-//1、单纯形算子
+//0、单纯形算子
 // B_T:B 逆的转置
 //CB:基变量对价值系统
 //用B_T的每行乘以CB的每列
@@ -114,7 +125,7 @@ void LinearRe::y_Cal(){
     }
 }
 
-//2、检验数，选入基变量
+//0、检验数，选入基变量
 // Z_N=CN-NTY_，Z_N为检验数
 //C0N表示原始的输入目标向量,其从k之后开始才是CN
 //NT是我们需要的，输入N要用其转置，注意标号
@@ -129,15 +140,43 @@ bool LinearRe::z_NCal(){
         }
         //选择检验数最小的，记录其位置
         checkNum=(*co)[numVar[j] ]-t;
-        if(checkNum<min){
-            min=checkNum;
-            inNumtmp=j;
+        Z_N.push_back(checkNum);
+        Z_N_To_RLoc.push_back(numVar[j]);
+//        if(checkNum<min){
+//            min=checkNum;
+//            min_in_loc=j-h;
+//            inNumtmp=j;
+//        }
+    }
+//    if(inNumtmp==-1){
+//        std::cout <<"gain the best result!"<<std::endl;
+//        std::cout <<"object:"<<object<<std::endl;
+//
+//#ifdef WEDEBUG
+//        for(int i=0; i<h;++i){
+//            printf("val_%d =%.2f\n",numVar[i],(*mc)[i][l-1]);
+//        }
+//#endif
+//        return true;
+//    }
+//    inNum=inNumtmp;
+//    minAlpha=min;
+    return false;
+
+}
+//1、在非基变量选择换入基的变量编号
+bool LinearRe::chooseBaseCol() {
+    double min=1.0e6;
+    int loc{-1};
+    for(int i=0;i<h;++i){
+        if(Z_N[i]<min){
+            min=Z_N[i];
+            min_in_loc=i;
+            loc=Z_N_To_RLoc[i];
         }
     }
-    if(inNumtmp==-1){
-        std::cout <<"gain the best result!"<<std::endl;
-        std::cout <<"object:"<<object<<std::endl;
-
+    if(min>=0){
+        printf("gain the best solution!\n");
 #ifdef WEDEBUG
         for(int i=0; i<h;++i){
             printf("val_%d =%.2f\n",numVar[i],(*mc)[i][l-1]);
@@ -145,12 +184,11 @@ bool LinearRe::z_NCal(){
 #endif
         return true;
     }
-    inNum=inNumtmp;
     minAlpha=min;
+    inNum=loc;
     return false;
-
 }
-//3、
+//2、
 // 计算变换后的矩阵要换入基的那一列的系数计算
 void LinearRe::updateFactor(){
     if(inNum==-1){
@@ -175,11 +213,9 @@ void LinearRe::updateFactor(){
     for(int i=0;i<h;++i){
         //用于后面计算资源向量
         inVarFactor[i]=newCol[i];
-        //更新换入变量系数
-        (*mc)[i][numVar[inNum] ]=newCol[i];
     }
 }
-//4、确定换出基
+//3、确定换出基
 void LinearRe::chooseOut(){
     double min1{1.0e6};
     double tmp{0};
@@ -201,13 +237,7 @@ void LinearRe::chooseOut(){
     outNum=outNumTmp;
     minAlpha1=min1;
 }
-//4.5更新换出的系数
-void LinearRe::updateOutFactor(){
-    for(int i=0;i<h;++i){
-        (*mc)[i][numVar[outNum]]=B_[i][outNum];
-    }
-}
-//5、更新资源向量,计算目标值，更换基变量位置并记录
+//4、更新资源向量,计算目标值，更换基变量位置并记录
 void LinearRe::updateResource(){
     for(int i=0;i<h;++i){
         (*mc)[i][l-1]=(*mc)[i][l-1]-minAlpha1*(*mc)[i][numVar[inNum] ];
@@ -221,7 +251,30 @@ void LinearRe::updateResource(){
     numVar[outNum]=numVar[inNum];
     numVar[inNum]=tmp;
 }
-//6、更新B_,矩阵初等行变换，由换出位置知道哪个是主元，由换进位置知道对哪列进行单位化
+//5、计算DetaN
+void LinearRe::colDetaN() {
+    std::vector<double> v;
+    for(int i=0;i<h;++i){
+        v.push_back(B_[outNum][i]);
+    }
+    for(int i=h;i<s;++i){
+        double tmp{0.0};
+        for(int j=0;j<h;++j){
+            tmp=tmp+(*mc)[j][ numVar[i] ]*v[j];
+        }
+        DetaN.push_back(tmp);
+    }
+}
+//6、更新检验数
+void LinearRe::updateZ_N() {
+    double Beta{0.0};
+    Beta=-(Z_N[min_in_loc]/inVarFactor[min_in_loc]);
+    for(int i=0;i<h;++i){
+        //Beta.push_back(-(Z_N[i]/inVarFactor[i]));
+        Z_N[i]=Z_N[i]+Beta*DetaN[i];
+    }
+}
+//7、更新B_,矩阵初等行变换，由换出位置知道哪个是主元，由换进位置知道对哪列进行单位化
 void LinearRe::updateB_(){
     double k;
     k=1.0/inVarFactor[outNum];

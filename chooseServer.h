@@ -36,18 +36,18 @@ std::vector<int> ChooseServer::serverCandidate;
 void ChooseServer::testlwlp() {
     std::vector<std::vector<double >> matrix;
       //case1
-    std::vector<double> m1={1,0,0,1,2,8};
-    std::vector<double> m2={0,1,0,4,0,16};
-    std::vector<double> m3={0,0,1,0,4,12};
-
-    matrix.push_back(m1);
-    matrix.push_back(m2);
-    matrix.push_back(m3);
-    double myoj[]={0,0,0,-2,-3};
-    std::vector<double> oj(&myoj[0],&myoj[5]);
+//    std::vector<double> m1={1,0,0,1,2,8};
+//    std::vector<double> m2={0,1,0,4,0,16};
+//    std::vector<double> m3={0,0,1,0,4,12};
+//
+//    matrix.push_back(m1);
+//    matrix.push_back(m2);
+//    matrix.push_back(m3);
+//    double myoj[]={0,0,0,-2,-3};
+//    std::vector<double> oj(&myoj[0],&myoj[5]);
 
     //case2
-    /*std::vector<double> m1={1,0,0,0,2,1,3,15};
+    std::vector<double> m1={1,0,0,0,2,1,3,15};
     std::vector<double> m2={0,1,0,0,1,1,1,12};
     std::vector<double> m3={0,0,1,0,0,1,-3,3};
     std::vector<double> m4={0,0,0,1,2,1,0,9};
@@ -58,7 +58,7 @@ void ChooseServer::testlwlp() {
     matrix.push_back(m3);
     matrix.push_back(m4);
     double myoj[]={0,0,0,0,-4,-3,-5};
-    std::vector<double> oj(&myoj[0],&myoj[7]);*/
+    std::vector<double> oj(&myoj[0],&myoj[7]);
 
     LinearRe re=LinearRe(&matrix,&oj);
     re.run();
