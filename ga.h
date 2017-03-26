@@ -214,7 +214,7 @@ public:
 
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
     }
 
     // 交换父子群体

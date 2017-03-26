@@ -14,19 +14,29 @@
 
 #include "deploy.h"
 #include "common.h"
+#define Mc
 
 //你要完成的功能总入口
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 {
+    char* result;
     Graph G;
     G.init(topo);
-
     //ChooseServer::testlwlp();
     ChooseServer::lpChoose();
     printf("print out serverID :\n");
     ChooseServer::printVector(ChooseServer::serverID);
     printf("print out candidate serverID :\n");
     ChooseServer::printVector(ChooseServer::serverCandidate);
+#ifdef Mc
+    MCMF m;
+    result=m.run(Graph::nodeCount,Graph::arcCount);
+#endif // Mc
+#ifdef Zk
+    ZKW z;
+    result=z.run(Graph::nodeCount,Graph::arcCount);
+#endif // Zk
+    write_result(result,filename);
 
 }
 

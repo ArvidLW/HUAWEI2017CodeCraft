@@ -159,7 +159,7 @@ void ChooseServer::printArr(double a[],int m){
 }
 
 void ChooseServer::printVector(std::vector<int> v){
-    printf("count is: %d\n",v.size());
+    printf("count is: %d\n",(signed)v.size());
     for(int i=0;i<(signed)v.size();++i){
         printf("%d, ",v[i]);
     }

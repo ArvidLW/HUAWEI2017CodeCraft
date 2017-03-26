@@ -26,18 +26,40 @@
 #define MAX_VALUE_SUPER_OUT 2000.0  //用来设定超源节点与服务器位置关系，作为服务器最大输出系数
 #define SERVER_VAL_PARA 1.0         //服务器价格参数，用来变换服务器价格
 
+#define INF 9999                    //极大值
+//#define MAX_EDGE_NUM_G (2000*20+1500)
+#define MAX_NODE_NUM 1010           //最大节点数
+
 //#define WEDEBUG                     //用于打印基本信息与计算过程
 
-#include <string.h>
-#include <stdlib.h>
+//c库
+#include <cstring>
+#include <cstdlib>
 #include <stdio.h>
+#include <cstdio>
+#include <cmath>
+#include <cassert>
+
+//c++
 #include <iostream>
+#include <string>
 #include <vector>
+#include <bitset>
+#include <list>
+#include <stack>
+#include <queue>
+#include <unordered_map>
+
+//we
 #include "Graph.h"          //1、建图
 #include "lwlp.h"           //2、建线性规划
 #include "chooseServer.h"   //3、开始选择服务器
-#include "mcmf.h"           //4、最小费用流
+#include "mc_zk.h"          //4、mcmf和zkw共有头文件
+#include "mcmf.h"           //4.1、最小费用流mcmf
+#include "zkw.h"            //4.2、zkw
 //#include "ga.h"             //5、遗传
+#include "NeSearch.h"       //邻域搜索+禁忌
+
 
 
 
