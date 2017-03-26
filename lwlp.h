@@ -131,8 +131,8 @@ void LinearRe::y_Cal(){
 //NT是我们需要的，输入N要用其转置，注意标号
 //计算检验数，并选出要换入的标号，若检验数都大于等于零则停止（获得最优解）
 bool LinearRe::z_NCal(){
-    double min=0,checkNum;
-    int inNumtmp{-1};
+    double checkNum{0.0};
+    //int inNumtmp{-1};
     for(int j=h;j<s;++j){
         double t=0;
         for(int i=0;i<h;++i){
@@ -142,25 +142,8 @@ bool LinearRe::z_NCal(){
         checkNum=(*co)[numVar[j] ]-t;
         Z_N.push_back(checkNum);
         Z_N_To_RLoc.push_back(numVar[j]);
-//        if(checkNum<min){
-//            min=checkNum;
-//            min_in_loc=j-h;
-//            inNumtmp=j;
-//        }
+
     }
-//    if(inNumtmp==-1){
-//        std::cout <<"gain the best result!"<<std::endl;
-//        std::cout <<"object:"<<object<<std::endl;
-//
-//#ifdef WEDEBUG
-//        for(int i=0; i<h;++i){
-//            printf("val_%d =%.2f\n",numVar[i],(*mc)[i][l-1]);
-//        }
-//#endif
-//        return true;
-//    }
-//    inNum=inNumtmp;
-//    minAlpha=min;
     return false;
 
 }
