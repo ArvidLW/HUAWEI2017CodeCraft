@@ -16,6 +16,10 @@
 #define CDN_GA_H
 
 
+
+#define MAX_COST 1000000
+
+
 /**
  * 存储任意两点之间的距离和路径，Floyd算法
  * */
@@ -83,30 +87,32 @@ bool GA::GetPath(int i, int j) {
     std::cout<<"-->"<<j<<std::endl;
     std::cout<<"最短路径长度为:"<<VertexCost[i][j]<<std::endl;
 
-    if (getPath.empty() == FALSE) {
-        return FALSE;
+    if (getPath.empty() == false) {
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 
 // 遗传算法实现函数
 class OurGA {
 private:
-    int ga_size = 2048; // 种群大小
-    int ga_max_iterate = 16384;	// 最大迭代次数
-    float ga_elitism_rate = 0.10f; // 精英比率
-    float ga_mutation_rate  = 0.25f; // 变异率
+    int ga_size = 20; // 种群大小 2048
+    int ga_max_iterate = 40;	// 最大迭代次数 16384
+    float ga_elitism_rate = 0.10f; // 精英比率 0.10f
+    float ga_mutation_rate  = 0.05f; // 变异率 0.25f
     float ga_mutation = RAND_MAX * ga_mutation_rate;
-    std::string ga_target = "1110001111011111100001111100"; // 目标
+    std::vector<int> ga_server = ChooseServer::serverID; // ChooseServer::serverCandidate;
+    std::vector<int> tmp_server = ChooseServer::serverID; // ChooseServer::serverCandidate;
+    int ga_target_size = ChooseServer::serverID.size(); // 目标大小，即最优服务器可能包含的数量
 
     // 遗传算法结构体，包括适应与最优解
     struct ga_struct {
-        string str;						// the string
-        unsigned int fitness;			// its fitness
+        std::string str; // 个体基因编码串
+        double fitness; // 个体适应度
     };
-    typedef vector<ga_struct> ga_vector;//
+    typedef std::vector<ga_struct> ga_vector;// 合并写法
 
 public:
     // 初始化化参数
@@ -122,21 +128,27 @@ public:
         ga_mutation_rate = mutation_rate;
     }
 
-    // 初始化种群
-    void init_population(ga_vector &population, ga_vector &buffer ) {
-        int tsize = ga_target.size(); // 目标大小，即最优服务器可能包含的数量
-
-        for (int i=0; i<ga_max_iterate; i++) {
+    // 初始化种群（服务器）
+    void init_population_server(ga_vector &population, ga_vector &buffer ) {
+        for (int i=0; i<ga_size; i++) {
             ga_struct citizen;
 
-            citizen.fitness = 0;
+            citizen.fitness = 0.0;
             citizen.str.erase();
 
             // 初始化个体基因
-            for (int j=0; j<tsize; j++) {
-                citizen.str += std::to_string(rand() % 2);
+            if (i == 0) {
+                // 将最优个体基因加入种群
+                for (int j=0; j<ga_target_size; j++) {
+                    citizen.str += std::to_string(1);
+                }
             }
-            std::cout<<citizen.str<<std::endl;
+            else {
+                // 初始化其余个体基因
+                for (int j=0; j<ga_target_size; j++) {
+                    citizen.str += std::to_string(rand() % 2);
+                }
+            }
 
             // 将个体放入种群
             population.push_back(citizen);
@@ -146,29 +158,45 @@ public:
         buffer.resize(ga_size);
     }
 
-    // 计算适应度
-    void calc_fitness(ga_vector &population) {
-        string target = ga_target;
-        int tsize = target.size();
-        unsigned int fitness;
+    // 计算适应度（服务器）
+    void calc_fitness_server(ga_vector &population) {
+
+//        for (int i=0; i<ga_size; i++) {
+//            std::cout<<(population)[i].str<<std::endl;
+//        }
 
         for (int i=0; i<ga_size; i++) {
-            fitness = 0;
-            for (int j=0; j<tsize; j++) {
-                fitness += abs(int(population[i].str[j] - target[j]));
+            // 清空服务器节点放置缓存
+            std::vector <int>().swap(ChooseServer::serverID);
+            for (int j=0; j<ga_target_size; j++) {
+                if (population[i].str[j] == '1') {
+                    ChooseServer::serverID.push_back(ga_server[j]);
+                }
             }
 
-            population[i].fitness = fitness;
+            //ChooseServer::printVector(ChooseServer::serverID);
+
+            MCMF mcmf;
+            mcmf.run(Graph::nodeCount,Graph::arcCount);
+            //ChooseServer::printVector(ChooseServer::serverID);
+            //ZKW zkw;
+            //zkw.run(Graph::nodeCount,Graph::arcCount);
+            if (mcmf.s[0] == 'N') {
+                population[i].fitness = MAX_COST;
+            }
+            else {
+                population[i].fitness = mcmf.minicost; //1/log10((double)zkw.minicost + 1.0);
+//                printf("Minicost:%.f\tFitness:%.f\n", mcmf.minicost, population[i].fitness);
+            }
         }
     }
 
-    // 从小到大排序
+    //  // 根据适应度对个体进行排序，从小到大排序
     static bool fitness_sort(ga_struct x, ga_struct y) {
         return (x.fitness < y.fitness);
     }
-    // 根据适应度对个体进行排序
     inline void sort_by_fitness(ga_vector &population) {
-        sort(population.begin(), population.end(), fitness_sort);
+        std::sort(population.begin(), population.end(), fitness_sort);
     }
 
     // 精英群体
@@ -179,22 +207,25 @@ public:
         }
     }
 
-    // 突变操作
-    void mutate(ga_struct &member) {
-        int tsize = ga_target.size();
-        int ipos = rand() % tsize;
-        int delta = (rand() % 2);
+    // 突变操作（服务器）
+    void mutate_server(ga_struct &member) {
+        int ipos = rand() % ga_target_size;
 
-        member.str[ipos] = ((member.str[ipos] + delta) % 2);
+        if (rand() % 2 == 1){
+            member.str[ipos] = '1';
+        }
+        else {
+            member.str[ipos] = '0';
+        }
+//        std::cout<<member.str[ipos]<<std::endl;
     }
 
-    // 交换操作
-    void mate(ga_vector &population, ga_vector &buffer) {
+    // 交换操作（服务器）
+    void mate_server(ga_vector &population, ga_vector &buffer) {
         int spos;
         int i1;
         int i2;
         int esize = ga_size * ga_elitism_rate;
-        int tsize = ga_target.size();
 
         // 精英群体
         elitism(population, buffer, esize);
@@ -203,18 +234,36 @@ public:
         for (int i=esize; i<ga_size; i++) {
             i1 = rand() % (ga_size / 2);
             i2 = rand() % (ga_size / 2);
-            spos = rand() % tsize;
+            spos = rand() % ga_target_size;
 
             buffer[i].str = population[i1].str.substr(0, spos) +
-                            population[i2].str.substr(spos, esize - spos);
+                            population[i2].str.substr(spos, ga_target_size - spos);
 
-            if (rand() < ga_mutation) mutate(buffer[i]);
+            if (rand() < ga_mutation) mutate_server(buffer[i]);
         }
     }
 
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
         std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+    }
+
+    // 基因解码
+    void decode(ga_vector &gav, char *filename) {
+        // 清空服务器节点放置缓存
+        std::vector <int>().swap(ChooseServer::serverID);
+
+        for (int i = 0; i < gav[0].str.size(); ++i) {
+            if (gav[0].str[i] == '1') {
+                ChooseServer::serverID.push_back(ga_server[i]);
+            }
+        }
+
+        MCMF mcmf;
+        mcmf.run(Graph::nodeCount,Graph::arcCount);
+        write_result(mcmf.s,filename);
+
+//        printf("Minicost:%.1f\n", gav[0].fitness);
     }
 
     // 交换父子群体
@@ -224,26 +273,28 @@ public:
         buffer = temp;
     }
 
-    bool GaAlgorithm(std::vector<int> InitialServer, std::vector<int> AlternataServer,
-                    int vertexNum, int edgeNum) {
+    bool GaAlgorithmServer(std::vector<int> InitialServer, std::vector<int> AlternataServer,
+                           int vertexNum, int edgeNum, char *filename) {
         // 用于产生伪随机数的时间种子
         srand(unsigned(time(NULL)));
 
         ga_vector pop_alpha, pop_beta;
         ga_vector *population, *buffer;
 
-        init_population(pop_alpha, pop_beta);
+        init_population_server(pop_alpha, pop_beta);
+
         population = &pop_alpha;
         buffer = &pop_beta;
 
         for (int i=0; i<ga_max_iterate; i++) {
-            calc_fitness(*population);		// 计算适应度
+            calc_fitness_server(*population);		// 计算适应度
             sort_by_fitness(*population);	// 对个体进行排序
             print_best(*population);		// 输出最好的个体
+            decode(*population, filename);  // 基因解码
 
             if ((*population)[0].fitness == 0) break;
 
-            mate(*population, *buffer);		// 个体基因交换交换
+            mate_server(*population, *buffer);		// 个体基因交换
             swap(population, buffer);		// 交换父子群体
         }
 

@@ -124,8 +124,8 @@ void Graph::gNetBuild(char * topo[]) {
             ++k;
         }
         Arc *p=(Arc *)calloc(1,sizeof(Arc));
-        p->capacity=tmp[2];
-        p->cost=tmp[3];
+        p->capacity=(double)tmp[2];
+        p->cost=(double)tmp[3];
         gNet[tmp[0] ][tmp[1] ]=p;
         //赋值另一半
         gNet[tmp[1] ][tmp[0] ]=p;
@@ -161,7 +161,7 @@ void Graph::netNodeBuild(char **topo) {
             r=strtok(NULL," ");
             ++k;
         }
-        netNode[tmp[1]]->require=tmp[2];
+        netNode[tmp[1]]->require=(double)tmp[2];
         netNode[tmp[1]]->isWithConsumer=true;
         netNode[tmp[1]]->consumerId=tmp[0];
 

@@ -3,7 +3,7 @@
  *
  * mcmf.h
  *
- * mcmfËã·¨
+ * mcmfç®—æ³•
  *
  * Date: March 26, 2017
  * Author: Wei Liu, Ling Bao, Shangyue Zhou
@@ -18,180 +18,189 @@
 
 struct MCMF
 {
-    private:
-        std::vector<Link> edge;
-        std::vector<int> head;
-        std::vector<PRE> pre;
-        std::vector<int> dist;
-        std::vector<Path> path;
-        int po;
-        int sum_flow;
-        int minicost;
-        int path_num;//Éú³ÉÁ÷µÄÂ·¾¶ÊıÁ¿
+private:
+    std::vector<Link> edge;
+    std::vector<int> head;
+    std::vector<PRE> pre;
+    std::vector<double> dist;
+    std::vector<Path> path;
+    int po;
+    double sum_flow;
 
-        void Init(int num_n,int num_e)
+    int path_num;//ç”Ÿæˆæµçš„è·¯å¾„æ•°é‡
+
+    void Init(int num_n,int num_e)
+    {
+        po=0;
+        sum_flow=0.0;
+        minicost=0.0;
+        path_num=0;
+        node_num=num_n+2;
+        link_num=num_e;
+        int edgesize=link_num*2+ChooseServer::serverID.size()+Graph::consumerCount;
+        source_p =node_num-2;
+        sink_p=node_num-1;
+        all_demand=0.0;
+        head.resize(node_num,-1);
+        edge.resize(edgesize*2,Link());
+        path.clear();
+
+        for(int i : ChooseServer::serverID)
         {
-            po=0;
-            sum_flow=0;
-            minicost=0;
-            path_num=0;
-            node_num=num_n+2;
-            link_num=num_e;
-            int edgesize=link_num*2+ChooseServer::serverID.size()+Graph::consumerCount;
-            source_p =node_num-2;
-            sink_p=node_num-1;
-            all_demand=0;
-            head.resize(node_num,-1);
-            edge.resize(edgesize*2,Link());
-            path.clear();
-
-            for(int i : ChooseServer::serverID)
+            add_edge(source_p,i,INF,0);//æ„é€ è¶…æºç‚¹å’Œéƒ¨ç½²æœåŠ¡å™¨èŠ‚ç‚¹çš„é“¾è·¯
+        }
+        for(int i=0;i<node_num-2;i++)
+        {
+            Arc *a=Graph::netNode[i]->arc;
+            while(a!=nullptr)
             {
-                add_edge(source_p,i,INF,0);//¹¹Ôì³¬Ô´µãºÍ²¿Êğ·şÎñÆ÷½ÚµãµÄÁ´Â·
-            }
-            for(int i=0;i<node_num-2;i++)
-            {
-                Arc *a=Graph::netNode[i]->arc;
-                while(a!=nullptr)
+                if(a->node0==i)
                 {
-                    if(a->node0==i)
+
                     add_edge(a->node0,a->node1,a->capacity,a->cost);
+
                     a=a->next;
                 }
-            }//¹¹ÔìÍøÂçÁ´Â·
-            for(int i=0;i<Graph::consumerCount;i++)
-            {
-                int net=Graph::consumerNode[i];
-                if(Graph::netNode[net]->isWithConsumer)
+            }
+        }//æ„é€ ç½‘ç»œé“¾è·¯
+        for(int i=0;i<Graph::consumerCount;i++)
+        {
+            int net=Graph::consumerNode[i];
+            if(Graph::netNode[net]->isWithConsumer)
                 add_edge(net,sink_p,Graph::netNode[net]->require,0);
-            }//¹¹ÔìÁ¬½ÓÏû·Ñ½ÚµãµÄÍøÂç½ÚµãÓë³¬»ãµãÖ®¼äµÄÁ´Â·£»
-        }
-        //Init¸ºÔğ¹¹ÔìÍøÂçÍ¼£¬¼ÓÈë½Úµã£¬ÊÇÓëÍâ²¿µÄ½Ó¿Ú£»
-        void add_edge(int u,int v,int cap,int cost)
+
+        }//æ„é€ è¿æ¥æ¶ˆè´¹èŠ‚ç‚¹çš„ç½‘ç»œèŠ‚ç‚¹ä¸è¶…æ±‡ç‚¹ä¹‹é—´çš„é“¾è·¯ï¼›
+    }
+    //Initè´Ÿè´£æ„é€ ç½‘ç»œå›¾ï¼ŒåŠ å…¥èŠ‚ç‚¹ï¼Œæ˜¯ä¸å¤–éƒ¨çš„æ¥å£ï¼›
+    void add_edge(int u,int v,double cap,double cost)
+    {
+
+        edge[po].u=u;
+        edge[po].v=v;
+        edge[po].cap=cap;
+        edge[po].cost=cost;
+        edge[po].next=head[u];
+        head[u]=po++;
+
+        edge[po].u=v;
+        edge[po].v=u;
+        edge[po].cap=0;
+        edge[po].cost=-cost;
+        edge[po].next=head[v];
+        head[v]=po++;
+    }
+    bool spfa(int s, int t)
+    {
+        std::bitset<MAX_NODE_NUM> mark;
+        std::deque<int> q;
+        int cur,cur_v;
+        dist.clear();
+        dist.clear();
+        dist.resize(node_num,INF);
+        pre.resize(node_num,PRE());
+
+        q.push_front(s);
+        mark.set(s);
+        dist[s]=0;
+
+        while(!q.empty())
         {
-
-            edge[po].u=u;
-            edge[po].v=v;
-            edge[po].cap=cap;
-            edge[po].cost=cost;
-            edge[po].next=head[u];
-            head[u]=po++;
-
-            edge[po].u=v;
-            edge[po].v=u;
-            edge[po].cap=0;
-            edge[po].cost=-cost;
-            edge[po].next=head[v];
-            head[v]=po++;
-        }
-        bool spfa(int s, int t)
-        {
-            std::bitset<MAX_NODE_NUM> mark;
-            std::deque<int> q;
-            int cur,cur_v;
-            dist.clear();
-            dist.clear();
-            dist.resize(node_num,INF);
-            pre.resize(node_num,PRE());
-
-            q.push_front(s);
-            mark.set(s);
-            dist[s]=0;
-
-            while(!q.empty())
+            cur=q.front();
+            mark.reset(cur);
+            q.pop_front();
+            for(int i=head[cur];i!=-1;i=edge[i].next)
             {
-                cur=q.front();
-                mark.reset(cur);
-                q.pop_front();
-                for(int i=head[cur];i!=-1;i=edge[i].next)
+                cur_v=edge[i].v;
+                if(edge[i].cap>0&&dist[cur_v]>dist[cur]+edge[i].cost)
                 {
-                    cur_v=edge[i].v;
-                    if(edge[i].cap>0&&dist[cur_v]>dist[cur]+edge[i].cost)
+                    dist[cur_v]=dist[cur]+edge[i].cost;
+                    pre[cur_v].n=cur;
+                    pre[cur_v].e=i;
+                    if(!mark.test(cur_v))
                     {
-                        dist[cur_v]=dist[cur]+edge[i].cost;
-                        pre[cur_v].n=cur;
-                        pre[cur_v].e=i;
-                        if(!mark.test(cur_v))
+                        if(q.empty())
+                            q.push_front(cur_v);
+                        else
                         {
-                            if(q.empty())
+                            if(dist[cur_v]<=dist[q.front()])
                                 q.push_front(cur_v);
                             else
-                            {
-                                if(dist[cur_v]<=dist[q.front()])
-                                    q.push_front(cur_v);
-                                else
-                                    q.push_back(cur_v);
-                            }
-                            mark.set(cur_v);
+                                q.push_back(cur_v);
                         }
+                        mark.set(cur_v);
                     }
                 }
             }
-            return dist[t]<INF;
         }
-        int aug(int s,int t)
+        return dist[t]<INF;
+    }
+    int aug(int s,int t)
+    {
+        double max_flow=INF;
+        Path temp;
+        for(int i=t;i!=-1;i=pre[i].n)
         {
-            int max_flow=INF;
-            Path temp;
-            for(int i=t;i!=-1;i=pre[i].n)
+            if(i!=s)
             {
-                if(i!=s)
-                {
-                    max_flow=std::min(edge[pre[i].e].cap,max_flow);
-                }
-                temp.nodes.push_front(i);
+                max_flow=std::min(edge[pre[i].e].cap,max_flow);
             }
-            temp.flow=max_flow;
-            for(int i=t;i!=-1;i=pre[i].n)
-            {
-                edge[pre[i].e].cap-=max_flow;
-                edge[(pre[i].e)^1].cap+=max_flow;
-            }
-            temp.cost=max_flow*dist[t];
-            ++path_num;
-            path.push_back(temp);
-            return max_flow;
+            temp.nodes.push_front(i);
         }
-    public:
-        char s[80000];
-        char* run(int num1,int num2)
+
+        temp.flow=max_flow;
+        for(int i=t;i!=-1&&i!=s;i=pre[i].n)
         {
-            Init(num1,num2);
-            while(spfa(source_p,sink_p))
+            edge[pre[i].e].cap-=max_flow;
+            edge[(pre[i].e)^1].cap+=max_flow;
+        }
+
+        temp.cost=max_flow*dist[t];
+        ++path_num;
+        path.push_back(temp);
+        return max_flow;
+    }
+public:
+    double minicost;
+    char s[80000];
+    char* run(int num1,int num2)
+    {
+        Init(num1,num2);
+        while(spfa(source_p,sink_p))
+        {
+            int tmpflow=aug(source_p,sink_p);
+            minicost+=tmpflow*dist[sink_p];
+            sum_flow+=tmpflow;
+
+        }
+        //std::cout<<std::endl;
+        if(sum_flow<all_demand)
+        {
+            sprintf(s,"NA\n");
+            std::cout<<"NA\n"<<std::endl;
+        }
+        else{
+            sprintf(s,"%d\n\n",path_num);
+            for(Path pa : path)
             {
-                int tmpflow=aug(source_p,sink_p);
-                minicost+=tmpflow*dist[sink_p];
-                sum_flow+=tmpflow;
-            }
-            std::cout<<std::endl;
-            if(sum_flow<all_demand)
-            {
-                sprintf(s,"NA\n");
-                std::cout<<"NA\n"<<std::endl;
-            }
-            else{
-                sprintf(s,"%d\n\n",path_num);
-                for(Path pa : path)
+                pa.nodes.pop_front();
+                pa.nodes.pop_back();
+                int t=pa.nodes.back();
+                pa.nodes.push_back(Graph::netNode[t]->consumerId);
+                char s1[1000];
+                for(int n : pa.nodes)
                 {
-                    pa.nodes.pop_front();
-                    pa.nodes.pop_back();
-                    int t=pa.nodes.back();
-                    pa.nodes.push_back(Graph::netNode[t]->consumerId);
-                    char s1[1000];
-                    for(int n : pa.nodes)
-                    {
-                            sprintf(s1,"%d ",n);
-                            strcat(s,s1);
-                    }
-                    sprintf(s1,"%d\n",pa.flow);
+                    sprintf(s1,"%d ",n);
                     strcat(s,s1);
                 }
-                std::cout<<s<<std::endl;
-                minicost+=ChooseServer::serverID.size()*Graph::serverFee;
-                std::cout<<"Cost:"<<minicost<<std::endl;
+                sprintf(s1,"%.f\n",pa.flow);
+                strcat(s,s1);
             }
-            return s;
+            //std::cout<<s<<std::endl;
+            minicost+=ChooseServer::serverID.size()*Graph::serverFee;
+            //std::cout<<"Cost:"<<minicost<<std::endl;
         }
+        return s;
+    }
 
 };
 #endif // MCMF_H_INCLUDED

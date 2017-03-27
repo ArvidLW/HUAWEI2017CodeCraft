@@ -16,6 +16,8 @@
 
 
 struct ZKW {
+    public:
+            double minicost;
     private :
             std::vector<Link> edge;
             std::vector<int> head;
@@ -25,9 +27,9 @@ struct ZKW {
             std::vector<Path> path;
             std::bitset<MAX_NODE_NUM> mark;
             int po;
-            int max_flow;
+            double max_flow;
             int cost;
-            int minicost;
+
             int path_num;//生成流的路径数量
 
             void Init(int num_n,int num_e)
@@ -43,7 +45,7 @@ struct ZKW {
                 sink_p=node_num-1;
                 all_demand=0;
                 head.resize(node_num,-1);
-                edge.resize(edgesize*2,Link());
+                edge.resize(edgesize*2+1,Link());
                 path.clear();
 
                 for(int i : ChooseServer::serverID)
@@ -68,7 +70,7 @@ struct ZKW {
                 }//构造连接消费节点的网络节点与超汇点之间的链路；
             }
             //Init负责构造网络图，加入节点，是与外部的接口；
-            void add_edge(int u,int v,int cap,int cost)
+            void add_edge(int u,int v, double cap, double cost)
             {
 
                 edge[po].u=u;
@@ -149,7 +151,7 @@ struct ZKW {
                 return dist[s]<INF;
             }
 
-            int aug(int u,int f, std::deque<int> pat)
+            double aug(int u, double f, std::deque<int> pat)
             {
                 if(u == sink_p){
                     minicost += cost * f;
@@ -163,15 +165,15 @@ struct ZKW {
                     path_num++;
                     return f;
                 }
-                int tmp = f;
+                double tmp = f;
                 mark.set(u);
                 pat.push_back(u);
 
                 for(int i = head[u]; i != -1;i = edge[i].next){
                     int v = edge[i].v;
                     if(edge[i].cap && !edge[i].cost && !mark.test(v)){
-                        int tmp_f = tmp < edge[i].cap ? tmp : edge[i].cap;
-                        int cap = aug(v, tmp_f, pat);
+                        double tmp_f = tmp < edge[i].cap ? tmp : edge[i].cap;
+                        double cap = aug(v, tmp_f, pat);
                         edge[i].cap -= cap;
                         edge[i^1].cap += cap;
                         tmp -= cap;
@@ -204,7 +206,7 @@ struct ZKW {
                 std::cout<<"NA\n"<<std::endl;
             }
             else{
-                sprintf(s,"%d\n",path_num);
+                sprintf(s,"%d\n\n",path_num);
                 for(Path pa : path)
                 {
                     pa.Print();
@@ -218,7 +220,7 @@ struct ZKW {
                             sprintf(s1,"%d ",n);
                             strcat(s,s1);
                     }
-                    sprintf(s1,"%d\n",pa.flow);
+                    sprintf(s1,"%.f\n",pa.flow);
                     strcat(s,s1);
                 }
                 std::cout<<s<<std::endl;

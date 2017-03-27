@@ -14,14 +14,13 @@
 #ifndef GLOBAL_H_INCLUDED
 #define GLOBAL_H_INCLUDED
 
-
 struct Link{
-    Link() : u(-1), v(-1), cap(0), cost(INF), next(-1){}
     int u;
     int v;
-    int cap;
-    int cost;
     int next;
+    double cap;
+    double cost;
+    Link():u{-1}, v{-1},next{-1} ,cap{0.0}, cost{INF}  {}
 };//记录边
 
 struct PRE{
@@ -34,8 +33,8 @@ struct PRE{
 };//记录前驱点以及和前驱点构成的边号
 
 struct Path{
-    int cost;
-    int flow;
+    double cost;
+    double flow;
     std::deque<int> nodes;
     Path()
     {
@@ -58,5 +57,5 @@ int source_p;//超源点
 int sink_p;//超汇点
 int node_num;//网络结点数量
 int link_num;//边数量
-int all_demand;//所有消费结点的总需求
+double all_demand;//所有消费结点的总需求
 #endif // GLOBAL_H_INCLUDED

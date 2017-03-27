@@ -1,7 +1,7 @@
 #include "deploy.h"
 #include "lib_io.h"
 #include "lib_time.h"
-#include "stdio.h"
+#include <cstdio>
 
 int main(int argc, char *argv[])
 {
