@@ -14,7 +14,7 @@
 #include "deploy.h"
 #include "common.h"
 
-#define Mc
+//#define Mc
 //#define Zk
 
 //你要完成的功能总入口
@@ -26,13 +26,13 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //ChooseServer::testlwlp();
     DirectOUT::outResult();
     ChooseServer::lpChoose();
-    printf("print out serverID :\n");
-    ChooseServer::printVector(ChooseServer::serverID);
-    printf("print out candidate serverID :\n");
-    ChooseServer::printVector(ChooseServer::serverCandidate);
+//    printf("print out serverID :\n");
+//    ChooseServer::printVector(ChooseServer::serverID);
+//    printf("print out candidate serverID :\n");
+//    ChooseServer::printVector(ChooseServer::serverCandidate);
 
-    //OurGA ourGA = OurGA();
-    //ourGA.GaAlgorithmServer(ChooseServer::serverID, ChooseServer::serverCandidate, Graph::nodeCount, Graph::arcCount, filename);
+    OurGA ourGA = OurGA();
+    ourGA.GaAlgorithmServer(ChooseServer::serverID, ChooseServer::serverCandidate, Graph::nodeCount, Graph::arcCount, filename);
 #ifdef Mc
     MCMF m;
     result=m.run(Graph::nodeCount,Graph::arcCount);

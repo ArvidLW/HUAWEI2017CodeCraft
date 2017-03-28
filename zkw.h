@@ -28,7 +28,7 @@ struct ZKW {
             std::bitset<MAX_NODE_NUM> mark;
             int po;
             double max_flow;
-            int cost;
+            double cost;
 
             int path_num;//生成流的路径数量
 
@@ -65,8 +65,11 @@ struct ZKW {
                 for(int i=0;i<Graph::consumerCount;i++)
                 {
                     int net=Graph::consumerNode[i];
-                    if(Graph::netNode[net]->isWithConsumer)
-                    add_edge(net,sink_p,Graph::netNode[net]->require,0);
+                    if(Graph::netNode[net]->isWithConsumer){
+                        all_demand+=Graph::netNode[net]->require;
+                        add_edge(net,sink_p,Graph::netNode[net]->require,0);
+                    }
+
                 }//构造连接消费节点的网络节点与超汇点之间的链路；
             }
             //Init负责构造网络图，加入节点，是与外部的接口；
@@ -147,7 +150,7 @@ struct ZKW {
                 }
 
                 cost+=dist[s];
-                std::cout<<"Cost:"<<cost<<std::endl;
+                //std::cout<<"Cost:"<<cost<<std::endl;
                 return dist[s]<INF;
             }
 
@@ -186,7 +189,7 @@ struct ZKW {
 
         public :
 
-        char s[80000];
+        char s[MAX_OUT_CHAR_NUM];
         char* run(int num1,int num2)
         {
             Init(num1,num2);
@@ -204,26 +207,31 @@ struct ZKW {
             {
                 sprintf(s,"NA\n");
                 std::cout<<"NA\n"<<std::endl;
+                minicost=INF;
             }
             else{
-                sprintf(s,"%d\n\n",path_num);
+                int offset{0};
+                offset+=sprintf(s+offset,"%d\n\n",path_num);
+                //sprintf(s,"%d\n\n",path_num);
                 for(Path pa : path)
                 {
-                    pa.Print();
+                    //pa.Print();
                     pa.nodes.pop_front();
                     //pa.nodes.pop_back();
                     int t=pa.nodes.back();
                     pa.nodes.push_back(Graph::netNode[t]->consumerId);
-                    char s1[1000];
+                    //char s1[1000];
                     for(int n : pa.nodes)
                     {
-                            sprintf(s1,"%d ",n);
-                            strcat(s,s1);
+                        offset+=sprintf(s+offset,"%d ",n);
+                           // sprintf(s1,"%d ",n);
+                            //strcat(s,s1);
                     }
-                    sprintf(s1,"%.f\n",pa.flow);
-                    strcat(s,s1);
+                    offset+=sprintf(s+offset,"%.f\n",pa.flow);
+
                 }
-                std::cout<<s<<std::endl;
+                s[offset-1]='\0';
+                //std::cout<<s<<std::endl;
                 minicost+=ChooseServer::serverID.size()*Graph::serverFee;
                 std::cout<<"Cost:"<<minicost<<std::endl;
             }

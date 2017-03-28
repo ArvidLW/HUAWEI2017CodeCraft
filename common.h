@@ -26,7 +26,7 @@
 #define MAX_VALUE_SUPER_OUT 2000.0  //用来设定超源节点与服务器位置关系，作为服务器最大输出系数
 #define SERVER_VAL_PARA 1.0         //服务器价格参数，用来变换服务器价格
 
-#define INF 9999.0                    //极大值
+#define INF 1.0e8                    //极大值
 //#define MAX_EDGE_NUM_G (2000*20+1500)
 #define MAX_NODE_NUM 1010           //最大节点数
 #define MAX_OUT_CHAR_NUM 8000*12     //用于设定输出时的字符数组长符

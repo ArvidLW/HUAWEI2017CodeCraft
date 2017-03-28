@@ -16,8 +16,10 @@
 #define CDN_GA_H
 
 
-
-#define MAX_COST 1000000
+#define MAX_COST 1000000000
+#define MAX_FITNESS 1000000000.0
+//#define Zkw
+#define Mcmf
 
 
 /**
@@ -98,8 +100,8 @@ bool GA::GetPath(int i, int j) {
 // 遗传算法实现函数
 class OurGA {
 private:
-    int ga_size = 20; // 种群大小 2048
-    int ga_max_iterate = 40;	// 最大迭代次数 16384
+    int ga_size = 50; // 种群大小 2048
+    int ga_max_iterate = 80;	// 最大迭代次数 16384
     float ga_elitism_rate = 0.10f; // 精英比率 0.10f
     float ga_mutation_rate  = 0.05f; // 变异率 0.25f
     float ga_mutation = RAND_MAX * ga_mutation_rate;
@@ -176,17 +178,22 @@ public:
 
             //ChooseServer::printVector(ChooseServer::serverID);
 
-            MCMF mcmf;
-            mcmf.run(Graph::nodeCount,Graph::arcCount);
-            //ChooseServer::printVector(ChooseServer::serverID);
-            //ZKW zkw;
-            //zkw.run(Graph::nodeCount,Graph::arcCount);
-            if (mcmf.s[0] == 'N') {
-                population[i].fitness = MAX_COST;
+            if (!ChooseServer::serverID.empty()) {
+#ifdef Mcmf
+                MCMF mcmf;
+                mcmf.run(Graph::nodeCount,Graph::arcCount);
+                population[i].fitness = mcmf.minicost;
+#endif // Mcmf
+#ifdef Zkw
+                ZKW zkw;
+                zkw.run(Graph::nodeCount,Graph::arcCount);
+                population[i].fitness = zkw.minicost;
+#endif // Zkw
+                //printf("Fitness:%.f\n", population[i].fitness);
             }
             else {
-                population[i].fitness = mcmf.minicost; //1/log10((double)zkw.minicost + 1.0);
-//                printf("Minicost:%.f\tFitness:%.f\n", mcmf.minicost, population[i].fitness);
+                // 没有服务节点的个体
+                population[i].fitness = MAX_FITNESS;
             }
         }
     }
@@ -217,7 +224,7 @@ public:
         else {
             member.str[ipos] = '0';
         }
-//        std::cout<<member.str[ipos]<<std::endl;
+        //std::cout<<member.str[ipos]<<std::endl;
     }
 
     // 交换操作（服务器）
@@ -252,6 +259,7 @@ public:
     void decode(ga_vector &gav, char *filename) {
         // 清空服务器节点放置缓存
         std::vector <int>().swap(ChooseServer::serverID);
+        //ChooseServer::serverID.clear();
 
         for (int i = 0; i < gav[0].str.size(); ++i) {
             if (gav[0].str[i] == '1') {
@@ -259,11 +267,20 @@ public:
             }
         }
 
-        MCMF mcmf;
-        mcmf.run(Graph::nodeCount,Graph::arcCount);
-        write_result(mcmf.s,filename);
+        if (!ChooseServer::serverID.empty()) {
+#ifdef Mcmf
+            MCMF mcmf;
+            mcmf.run(Graph::nodeCount,Graph::arcCount);
+            write_result(mcmf.s,filename);
+#endif // Mcmf
+#ifdef Zkw
+            ZKW zkw;
+            zkw.run(Graph::nodeCount,Graph::arcCount);
+            write_result(zkw.s,filename);
+#endif // Zkw
 
-//        printf("Minicost:%.1f\n", gav[0].fitness);
+            //printf("Minicost:%.1f\n", gav[0].fitness);
+        }
     }
 
     // 交换父子群体
