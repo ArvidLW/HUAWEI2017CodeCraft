@@ -36,7 +36,8 @@ struct ZKW {
             {
                 po=0;
                 max_flow=0;
-                minicost=0;
+                minicost=0.0;
+                cost=0.0;
                 path_num=0;
                 node_num=num_n+2;
                 link_num=num_e;
