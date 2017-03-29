@@ -22,6 +22,7 @@ private:
 public:
     static std::vector<int> serverID;
     static std::vector<int> serverCandidate;
+    static std::vector<int> serverPossible;
 
     static void lpChoose();
     static void lpChoose2();
@@ -127,8 +128,11 @@ void ChooseServer::lpChoose() {
         if( -matrix[i][varN]>= MIN_VALUE ){
             serverID.push_back(i);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
         }
-        if(-matrix[i][varN] >= MIN_VALUE_ZERO ){
+        else if(-matrix[i][varN] >= MIN_VALUE_ZERO ){
             serverCandidate.push_back(i);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+        }
+        else if(-matrix[i][varN] >= MIN_VALUE_ZERO_DOWN){
+            serverPossible.push_back(i);
         }
     }
 }

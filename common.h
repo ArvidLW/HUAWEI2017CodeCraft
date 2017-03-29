@@ -21,16 +21,16 @@
 #define MAXNODE 1000                //最大节点数
 #define MAXCONSUMER 500             //最大消费节点数
 #define MAXVALUE 1000.0             //设定的最大值
-#define MIN_VALUE 0.010              //用来界定选择服务器
-#define MIN_VALUE_ZERO 0.005        //用来界定所有备选服务器
-#define MIN_VALUE_ZERO_DOWN 0.0     //界定线性规划包含的所有解
+#define MIN_VALUE 0.011              //用来界定选择服务器,serverID
+#define MIN_VALUE_ZERO 0.005        //用来界定所有备选服务器,serverCandidate
+#define MIN_VALUE_ZERO_DOWN 0.0     //界定线性规划包含的可能服务器,serverPossible
 #define MAX_VALUE_SUPER_OUT 2000.0  //用来设定超源节点与服务器位置关系，作为服务器最大输出系数
 #define SERVER_VAL_PARA 1.0         //服务器价格参数，用来变换服务器价格
 
 #define INF 1.0e8                    //极大值
 //#define MAX_EDGE_NUM_G (2000*20+1500)
 #define MAX_NODE_NUM 1010           //最大节点数
-#define MAX_OUT_CHAR_NUM 8000*12     //用于设定输出时的字符数组长符
+#define MAX_OUT_CHAR_NUM 200000     //用于设定输出时的字符数组长符
 
 //#define WEDEBUG                     //用于打印基本信息与计算过程
 

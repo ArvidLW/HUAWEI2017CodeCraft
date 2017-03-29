@@ -193,6 +193,7 @@ struct ZKW {
         char s[MAX_OUT_CHAR_NUM];
         char* run(int num1,int num2)
         {
+            int t0=clock();
             Init(num1,num2);
 
             while(spfa(source_p,sink_p))
@@ -211,6 +212,7 @@ struct ZKW {
                 minicost=INF;
             }
             else{
+                std::cout<<"inner timer:"<<clock()-t0<<std::endl;
                 int offset{0};
                 offset+=sprintf(s+offset,"%d\n\n",path_num);
                 //sprintf(s,"%d\n\n",path_num);
