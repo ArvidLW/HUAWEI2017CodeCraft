@@ -107,6 +107,7 @@ void Graph::getBaseInfo(char * topo[]){
     consumerCount=info[2];
     serverFee=atoi(topo[2]);
     //测试打印
+    printf(splitLine);
     printf("basic info: network node count, Arc count, consumer count\n");
     printf("basic info: %d,%d,%d,%.2f\n",nodeCount,arcCount,consumerCount,serverFee);
 
@@ -169,7 +170,7 @@ void Graph::netNodeBuild(char **topo) {
     }
 }
 void Graph::printGNet(){
-    printf("gNet printf! *********\n");
+    printf("gNet printf:%s",splitLine);
     for(int i=0;i<nodeCount;++i){
         for(int j=i;j<nodeCount;++j){
             if(gNet[i][j]!= nullptr){
@@ -184,7 +185,7 @@ void Graph::printGNet(){
     }
 }
 void Graph::printNetNode() {
-    printf("printNetNode! *********\n");
+    printf("printNetNode:%s",splitLine);
     for(int i=0;i<nodeCount;++i){
         Arc *p=netNode[i]->arc;
         printf("the Node %d connect the nodes is: ",i);
@@ -196,13 +197,12 @@ void Graph::printNetNode() {
     }
 }
 void Graph::printConsumerNode(){
-    printf("printConsumerNode ! ***********\n");
+    printf("printConsumerNode:%s",splitLine);
     for(int i=0;i<consumerCount;++i){
         printf("%d->%d,%.2f\n",i,consumerNode[i],netNode[consumerNode[i]]->require);
     }
 }
 void Graph::setGNetArcId(){
-    printf("\n setArcID ****\n");
     for(int i=0,k=0; i<nodeCount; ++i){
         //注意由于给的无向图，所以一半就行
         for(int j=i; j<nodeCount; ++j){

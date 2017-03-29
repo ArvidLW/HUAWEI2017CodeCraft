@@ -15,7 +15,7 @@
 #include "common.h"
 
 //#define Mc
-//#define Zk
+#define Zk
 
 //你要完成的功能总入口
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
@@ -25,13 +25,11 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     G.init(topo);
     //DirectOUT::outResult();//直接设置消费节点相连的网络节点为服务器，并输出结果
     ChooseServer::lpChoose();//线性规划选择服务器
-    printf("print out serverID :\n");
-    ChooseServer::printVector(ChooseServer::serverID);//打印服务器节点
-    printf("print out candidate serverID :\n");
-    ChooseServer::printVector(ChooseServer::serverCandidate);//打印备选服务器节点
+    ChooseServer::printServerInfo();//打印所选服务器信息
 
-    OurGA ourGA = OurGA();
-    ourGA.GaAlgorithmServer(ChooseServer::serverID, ChooseServer::serverCandidate, Graph::nodeCount, Graph::arcCount, filename);
+
+    //OurGA ourGA = OurGA();
+    //ourGA.GaAlgorithmServer(ChooseServer::serverID, ChooseServer::serverCandidate, Graph::nodeCount, Graph::arcCount, filename);
     //int tmp[]={0,9,23,42,61,77,86,88,105,125,143,156,176,193,198,201,204,221,233,253,256,267,281,290,304,324,336,356,375,388,391,394,414,416,429,449,454,458,469,477,482,491,507,512,525,537,557,573,590,601,613,628,630,631,642,659,660,671,691,694,700,702,716,731,749,759,771,791};
     //int tmp[]={11, 13, 17, 22, 34, 49, 50, 54, 62, 63, 68, 75, 77, 81, 89, 95, 100, 102, 119, 121, 122, 127, 133, 135, 137, 141, 147, 148, 149, 150, 151, 167, 173, 183, 185, 190, 196, 204, 205, 218, 219, 221, 238, 245, 246, 250, 260, 263, 270, 271, 283, 284, 289, 290, 291, 297, 304, 311, 313, 319, 335, 348, 352, 360, 372, 378, 384, 385, 393, 394, 396, 406, 410, 417, 424, 444, 450, 465, 473, 477, 478, 482, 503, 506, 530, 537, 541, 571, 579, 581, 582, 585, 587, 590, 595, 597, 600, 607, 608, 615, 624, 628, 638, 645, 656, 668, 672, 682, 686, 687, 689, 691, 698, 700, 711, 721, 724, 729, 730, 732, 735, 736, 743, 763, 781};
     //int tmp[]={0,9,23,42,61,77,86,88,105,125,143,156,176,193,198,201,204,221,233,253,256,267,281,290,304,324,336,356,375,388,391,394,414,416,429,449,454,458,469,477,482,491,507,512,525,537,557,573,590,601,613,628,630,631,642,659,660,671,691,694,700,702,716,731,749,759,771,791};
@@ -52,7 +50,8 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 #endif // Zk
     timer.End();//计时结束
     //std::cout<<"timer:"<<clock()-t0<<std::endl;
-    std::cout<<"timer:"<<timer.ms()<<std::endl;
+    std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
+    printf(splitLine);
     //write_result(result,filename);
     //write_result(mcmf.s,filename);
 

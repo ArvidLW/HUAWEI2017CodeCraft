@@ -25,15 +25,26 @@ public:
     static std::vector<int> serverPossible;
 
     static void lpChoose();
-    static void lpChoose2();
     static void testlwlp();
     static void joinArr(double c[], int sc,double a[],int sa, double b[], int sb);
     static void printArr(double a[],int m);
     static void printVector(std::vector<int> v);
+    static void printServerInfo();
 };
 std::vector<int> ChooseServer::serverID;
 std::vector<int> ChooseServer::serverCandidate;
+std::vector<int> ChooseServer::serverPossible;
 
+void ChooseServer::printServerInfo() {
+    printf(splitLine);
+    printf("serverID :");
+    ChooseServer::printVector(ChooseServer::serverID);//打印服务器节点
+    printf("candidate serverID :");
+    ChooseServer::printVector(ChooseServer::serverCandidate);//打印备选服务器节点
+    printf("Possible serverID :");
+    ChooseServer::printVector(ChooseServer::serverPossible);//打印可能服务器节点
+    printf(splitLine);
+}
 void ChooseServer::testlwlp() {
     std::vector<std::vector<double >> matrix;
       //case1
@@ -91,7 +102,7 @@ void ChooseServer::lpChoose() {
         //printArr(b,varN);
         //printf("netNode[1][i]=%d\n", (-1)*netNode[1][i]);
     }
-    printf("netword flow 0 constraint set ok\n");
+    //printf("netword flow 0 constraint set ok\n");
     /**网络节点流量差为0约束结束***/
 
     /**目标函数开始************/
@@ -117,7 +128,7 @@ void ChooseServer::lpChoose() {
     joinArr(myoj,varN,vx,Graph::nodeCount,ex,Graph::arcCount);
     //printArr(myoj,varN);
     std::vector<double> oj(&myoj[0],&myoj[varN]);
-    printf("object function set ok \n");
+    //printf("object function set ok \n");
     /**目标函数结束**********/
     LinearRe re=LinearRe(&matrix,&oj);
     re.run();
@@ -163,7 +174,7 @@ void ChooseServer::printArr(double a[],int m){
 }
 
 void ChooseServer::printVector(std::vector<int> v){
-    printf("count is: %d\n",(signed)v.size());
+    printf("count %d, ID as follows\n",(signed)v.size());
     for(int i=0;i<(signed)v.size();++i){
         printf("%d, ",v[i]);
     }

@@ -23,7 +23,7 @@
 #define MAXVALUE 1000.0             //设定的最大值
 #define MIN_VALUE 0.011              //用来界定选择服务器,serverID
 #define MIN_VALUE_ZERO 0.005        //用来界定所有备选服务器,serverCandidate
-#define MIN_VALUE_ZERO_DOWN 0.0     //界定线性规划包含的可能服务器,serverPossible
+#define MIN_VALUE_ZERO_DOWN 0.0005     //界定线性规划包含的可能服务器,serverPossible
 #define MAX_VALUE_SUPER_OUT 2000.0  //用来设定超源节点与服务器位置关系，作为服务器最大输出系数
 #define SERVER_VAL_PARA 1.0         //服务器价格参数，用来变换服务器价格
 
@@ -54,6 +54,11 @@
 
 //we
 #include "TimeCalculator.h" //0、计时器
+
+//全局变量
+TimeCalculator timer;       //计时器
+char splitLine[]="---------------------------------split line--------------------------------------\n";
+
 #include "Graph.h"          //1、建图
 #include "DirectOut.h"      //1.5、直接输出
 #include "lwlp.h"           //2、建线性规划
@@ -64,7 +69,6 @@
 #include "ga.h"             //5、遗传
 #include "NeSearch.h"       //邻域搜索+禁忌
 
-TimeCalculator timer;       //计时器
 
 
 

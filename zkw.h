@@ -212,7 +212,7 @@ struct ZKW {
                 minicost=INF;
             }
             else{
-                std::cout<<"inner timer:"<<clock()-t0<<std::endl;
+                std::cout<<"calculate cost time:"<<clock()-t0<<std::endl;
                 int offset{0};
                 offset+=sprintf(s+offset,"%d\n\n",path_num);
                 //sprintf(s,"%d\n\n",path_num);

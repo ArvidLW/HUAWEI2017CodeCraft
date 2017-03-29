@@ -55,7 +55,7 @@ struct LinearRe {
         h=(signed)matrixC->size();
         l=(signed)(*matrixC)[0].size();
         s=(signed)vectorO->size();
-        printf("h=%d,l=%d,s=%d\n",h,l,s);
+        //printf("h=%d,l=%d,s=%d\n",h,l,s);
         numVar.resize(l);
         //最后一列为资源向量
         if(l!=s+1){
@@ -159,7 +159,7 @@ bool LinearRe::chooseBaseCol() {
         }
     }
     if(min>=0){
-        printf("gain the best solution!\n");
+        printf("lp succceed to gain the selected server!\n");
 #ifdef WEDEBUG
         for(int i=0; i<h;++i){
             printf("val_%d =%.2f\n",numVar[i],(*mc)[i][l-1]);
