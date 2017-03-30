@@ -45,9 +45,16 @@ struct ZKW {
                 source_p =node_num-2;
                 sink_p=node_num-1;
                 all_demand=0;
+                head.clear();
+                edge.clear();
+                path.clear();
+                pre.clear();
+                dist.clear();
+                pat.clear();
+                mark.reset();
                 head.resize(node_num,-1);
                 edge.resize(edgesize*2+1,Link());
-                path.clear();
+
 
                 for(int i : ChooseServer::serverID)
                 {
@@ -193,7 +200,6 @@ struct ZKW {
         char s[MAX_OUT_CHAR_NUM];
         char* run(int num1,int num2)
         {
-            int t0=clock();
             Init(num1,num2);
 
             while(spfa(source_p,sink_p))
@@ -212,7 +218,6 @@ struct ZKW {
                 minicost=INF;
             }
             else{
-                std::cout<<"calculate cost time:"<<clock()-t0<<std::endl;
                 int offset{0};
                 offset+=sprintf(s+offset,"%d\n\n",path_num);
                 //sprintf(s,"%d\n\n",path_num);

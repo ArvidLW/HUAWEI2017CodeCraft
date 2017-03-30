@@ -15,7 +15,7 @@
 #include "common.h"
 
 //#define Mc
-#define Zk
+//#define Zk
 
 //你要完成的功能总入口
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
@@ -26,6 +26,9 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //DirectOUT::outResult();//直接设置消费节点相连的网络节点为服务器，并输出结果
     ChooseServer::lpChoose();//线性规划选择服务器
     ChooseServer::printServerInfo();//打印所选服务器信息
+    timer.Begin();//计时开始
+    WeGa wega(filename);
+    wega.chooseServer();
 
 
     //OurGA ourGA = OurGA();
@@ -37,7 +40,11 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //ChooseServer::serverID.resize(sizeof(tmp)/ sizeof(int));
     //ChooseServer::serverID.assign(&tmp[0], &tmp[sizeof(tmp)/ sizeof(int)]);
     //memcpy(&ChooseServer::serverID[0],tmp, sizeof(tmp));
-    timer.Begin();//计时开始
+
+//    OurGA ourGA = OurGA(filename);
+//    if (ourGA.bSolve) {
+//        ourGA.GaAlgorithmServer();
+//    }
     //int t0=clock();
 #ifdef Mc
     MCMF m;
@@ -50,7 +57,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 #endif // Zk
     timer.End();//计时结束
     //std::cout<<"timer:"<<clock()-t0<<std::endl;
-    std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
+    std::cout<<"find mincost algorithm time: "<<timer.ms()<<std::endl;
     printf(splitLine);
     //write_result(result,filename);
     //write_result(mcmf.s,filename);
