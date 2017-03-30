@@ -39,7 +39,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //memcpy(&ChooseServer::serverID[0],tmp, sizeof(tmp));
 
     timer.Begin();//计时开始
-    int t0=clock();
+    //int t0=clock();
     OurGA ourGA = OurGA(filename);
     if (ourGA.bSolve) {
         ourGA.GaAlgorithmServer();
@@ -55,9 +55,9 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     result=z.run(Graph::nodeCount,Graph::arcCount);
 #endif // Zk
 
-    std::cout<<"timer:"<<clock()-t0<<std::endl;
+    //std::cout<<"timer:"<<clock()-t0<<std::endl;
     timer.End();//计时结束
-    //std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
+    std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
     printf(splitLine);
 //    write_result(result,filename);
     //write_result(mcmf.s,filename);

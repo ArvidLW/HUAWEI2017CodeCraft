@@ -30,6 +30,7 @@ private:
     float ga_elitism_rate = 0.05f; // 精英比率 0.10f
     float ga_mutation_rate  = 0.75f; // 变异率 0.25f
     float ga_mutation = RAND_MAX * ga_mutation_rate;
+    MCMF ga_run;
 
     // 网络相关的动态初始化参数
     std::vector<int> ga_server = ChooseServer::serverID; // 工作原码
@@ -69,7 +70,7 @@ public:
         ga_target_size = ChooseServer::serverID.size();
         ga_server = ChooseServer::serverID;
 
-        ZKW ga_run;
+        //ZKW ga_run;
         ga_run.run(Graph::nodeCount,Graph::arcCount);
         if (!(ga_run.minicost < INF)) {
             printf("No LP Solve!\n");
@@ -142,7 +143,7 @@ public:
 
             // 计算个体适应度
             if (!ChooseServer::serverID.empty()) {
-                ZKW ga_run;
+                //ZKW ga_run;
                 ga_run.run(Graph::nodeCount,Graph::arcCount);
                 population[i].fitness = ga_run.minicost;
             }
@@ -220,8 +221,8 @@ public:
     // 基因解码
     void decode() {
         // 清空服务器节点放置缓存
-        std::vector <int>().swap(ChooseServer::serverID);
-        //ChooseServer::serverID.clear();
+        //std::vector <int>().swap(ChooseServer::serverID);
+        ChooseServer::serverID.clear();
 
         for (int i = 0; i < ga_s.size(); ++i) {
             if (ga_s[i] == '1') {
@@ -229,8 +230,8 @@ public:
             }
         }
 
-        if (!ChooseServer::serverID.empty()) {
-            ZKW ga_run;
+        if (ChooseServer::serverID.size()!=0) {
+            //ZKW ga_run;
             ga_run.run(Graph::nodeCount,Graph::arcCount);
             if (ga_run.minicost < INF) {
                 write_result(ga_run.s,ga_filename);

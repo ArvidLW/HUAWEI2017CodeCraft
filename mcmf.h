@@ -41,9 +41,14 @@ private:
         source_p =node_num-2;
         sink_p=node_num-1;
         all_demand=0.0;
+        head.clear();
+        edge.clear();
+        pre.clear();
+        dist.clear();
+        path.clear();
         head.resize(node_num,-1);
         edge.resize(edgesize*2,Link());
-        path.clear();
+        memset(s,0,sizeof(s));
 
         for(int i : ChooseServer::serverID)
         {
