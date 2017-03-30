@@ -15,7 +15,7 @@
 #include "common.h"
 
 //#define Mc
-#define Zk
+//#define Zk
 
 //你要完成的功能总入口
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
@@ -37,8 +37,14 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //ChooseServer::serverID.resize(sizeof(tmp)/ sizeof(int));
     //ChooseServer::serverID.assign(&tmp[0], &tmp[sizeof(tmp)/ sizeof(int)]);
     //memcpy(&ChooseServer::serverID[0],tmp, sizeof(tmp));
+
     timer.Begin();//计时开始
-    //int t0=clock();
+    int t0=clock();
+    OurGA ourGA = OurGA(filename);
+    if (ourGA.bSolve) {
+        ourGA.GaAlgorithmServer();
+    }
+
 #ifdef Mc
     MCMF m;
     result=m.run(Graph::nodeCount,Graph::arcCount);
@@ -48,16 +54,12 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     ZKW z;
     result=z.run(Graph::nodeCount,Graph::arcCount);
 #endif // Zk
+
+    std::cout<<"timer:"<<clock()-t0<<std::endl;
     timer.End();//计时结束
-    //std::cout<<"timer:"<<clock()-t0<<std::endl;
-    std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
+    //std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
     printf(splitLine);
-    //write_result(result,filename);
+//    write_result(result,filename);
     //write_result(mcmf.s,filename);
 
 }
-
-
-
-
-
