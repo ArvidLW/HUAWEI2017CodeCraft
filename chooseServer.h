@@ -20,6 +20,7 @@ class ChooseServer {
 private:
 
 public:
+    static double minCost;
     static std::vector<int> serverID;
     static std::vector<int> serverCandidate;
     static std::vector<int> serverPossible;
