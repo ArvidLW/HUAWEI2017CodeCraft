@@ -66,8 +66,12 @@ char splitLine[]="---------------------------------split line-------------------
 #include "mc_zk.h"          //4、mcmf和zkw共有头文件
 #include "mcmf.h"           //4.1、最小费用流mcmf
 #include "zkw.h"            //4.2、zkw
+
+ZKW mc;
+
 #include "WeGa.h"           //5、遗传
 #include "NeSearch.h"       //邻域搜索+禁忌
+
 
 
 
