@@ -15,15 +15,26 @@
 #ifndef CDN_CHOOSESERVER_H
 #define CDN_CHOOSESERVER_H
 
+struct serverOrder{
+    int id;
+    double val;
+    bool operator < (const serverOrder &d) const{
+        return val<d.val;//默认为大顶堆
+    }
+    serverOrder(int i, double v):id{i},val{v} {}
+};
 
 class ChooseServer {
 private:
 
 public:
     static double minCost;
+    static double minCostCan;
+    static double minCostPos;
     static std::vector<int> serverID;
     static std::vector<int> serverCandidate;
     static std::vector<int> serverPossible;
+    static std::priority_queue<serverOrder> pq;
 
     static void lpChoose();
     static void testlwlp();
@@ -32,7 +43,12 @@ public:
     static void printVector(std::vector<int> v);
     static void printServerInfo();
 };
+
+
+std::priority_queue<serverOrder> ChooseServer::pq;
 double ChooseServer::minCost{0};
+double ChooseServer::minCostCan{0};
+double ChooseServer::minCostPos{0};
 std::vector<int> ChooseServer::serverID;
 std::vector<int> ChooseServer::serverCandidate;
 std::vector<int> ChooseServer::serverPossible;
@@ -136,17 +152,40 @@ void ChooseServer::lpChoose() {
     re.run();
     //LinearProgrammingResult result=linearPSimplexM(matrix,oj);
     //result.print();
+    int sn{0},scn{0},spn{0};
     for(int i=0;i<Graph::nodeCount;++i){
         //浮点!=0判断，如果大于MIN_VALUE则变量值不为0，记为服务器位置，记录服务器编号
         if( -matrix[i][varN]>= MIN_VALUE ){
-            serverID.push_back(i);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+            ++sn;
+            //serverID.push_back(i);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
         }
         else if(-matrix[i][varN] >= MIN_VALUE_ZERO ){
-            serverCandidate.push_back(i);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
+            ++scn;
+            //serverCandidate.push_back(i);//网络节点从零开始编号，在线性规划中变量从1开始，而前info[0]个为网络节点
         }
         else if(-matrix[i][varN] >= MIN_VALUE_ZERO_DOWN){
-            serverPossible.push_back(i);
+            ++spn;
+            //serverPossible.push_back(i);
         }
+        if(-matrix[i][varN] >= MIN_VALUE_ZERO_DOWN){
+            serverOrder so{i,-matrix[i][varN]};
+            pq.push(so);
+        }
+
+    }
+
+    for (int i = 0; i < sn; ++i) {
+        serverID.push_back(pq.top().id);
+        //std::cout<<pq.top().val<<std::endl;
+        pq.pop();
+    }
+    for(int i=0;i<scn;++i){
+        serverCandidate.push_back(pq.top().id);
+        pq.pop();
+    }
+    for(int i=0;i<spn;++i){
+        serverPossible.push_back(pq.top().id);
+        pq.pop();
     }
 }
 void ChooseServer::joinArr(double c[], int sc,double a[5],int sa, double b[], int sb){
