@@ -21,6 +21,8 @@ private:
 
 public:
     static double minCost;
+    static double minCostCan;
+    static double minCostPos;
     static std::vector<int> serverID;
     static std::vector<int> serverCandidate;
     static std::vector<int> serverPossible;
@@ -32,7 +34,12 @@ public:
     static void printVector(std::vector<int> v);
     static void printServerInfo();
 };
+
+
+
 double ChooseServer::minCost{0};
+double ChooseServer::minCostCan{0};
+double ChooseServer::minCostPos{0};
 std::vector<int> ChooseServer::serverID;
 std::vector<int> ChooseServer::serverCandidate;
 std::vector<int> ChooseServer::serverPossible;

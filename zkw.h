@@ -213,7 +213,7 @@ public :
             if(max_flow<all_demand)
             {
                 sprintf(s,"NA\n");
-                std::cout<<"NA\n"<<std::endl;
+                //std::cout<<"NA"<<std::endl;
                 minicost=INF;
             } else{
                 minicost+=serverLocation.size()*Graph::serverFee;
