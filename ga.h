@@ -18,23 +18,23 @@
 
 #define MAX_COST 1e8
 // 85000000
-#define TIME_END 85000000
+#define TIME_END 850000000
 
 
 // 遗传算法实现函数
 class OurGA {
 private:
     // 默认初始化参数
-    int ga_max_iterate = 32000;	// 最大迭代次数 16384
+    int ga_max_iterate = 3200;	// 最大迭代次数 16384
 
     int ga_size; // 种群大小 2048
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 50; // 多少步进行精英增加以及变异率增加
+    int decay_e_step = 20; // 多少步进行精英增加以及变异率增加
     int decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
-    int mutate_step = 50; // 多少步后不同阶层个体突变情况的变化
+    int mutate_step = 20; // 多少步后不同阶层个体突变情况的变化
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
@@ -45,8 +45,8 @@ private:
     int ga_step;
 
     // 等级演化初始分布
-    int high = 5;
-    int middle = 95;
+    int high = 45;
+    int middle = 55;
 
     // 保存本次迭代最优基因及其适应度
     std::string ga_s;
@@ -253,11 +253,11 @@ public:
         int g = rand() % 100;
 
         if (ga_step % (mutate_step - 1) == 0) {
-            if (high < 40) {
-                high += 1;
+            if (high > 10) {
+                high -= 1;
             }
-            if (middle > 60) {
-                middle -= 1;
+            if (middle < 90) {
+                middle += 1;
             }
         }
 
