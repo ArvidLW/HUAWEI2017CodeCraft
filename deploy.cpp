@@ -24,7 +24,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     double minCost;
     Graph G;
     G.init(topo);
-    DirectOUT::outResult();
+    //DirectOUT::outResult();
     ChooseServer::lpChoose();//线性规划选择服务器
     ChooseServer::printServerInfo();//打印所选服务器信息
 
