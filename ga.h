@@ -25,36 +25,54 @@
 class OurGA {
 private:
     // 默认初始化参数
-    int ga_size = 50; // 种群大小 2048
     int ga_max_iterate = 32000;	// 最大迭代次数 16384
-    float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int esize;
-    float ga_mutation_rate  = 0.25f; // 变异率 0.25f
-    float ga_mutation;
-    int decay_step = 50;
-    float decay_rate = 0.05;
-    int ga_step;
-    int mutate_step = 50;
-    int high = 10;
-    int middle = 90;
 
-    //ZKW ga_run;
-    MCMF ga_run;
+    int ga_size; // 种群大小 2048
+
+    float ga_elitism_rate = 0.25f; // 精英比率 0.10f
+    int decay_e_step = 50; // 多少步进行精英增加以及变异率增加
+    int decay_e_rate;  // 不同等级基因大小的群体的衰减率
+    int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
+
+    int mutate_step = 50; // 多少步后不同阶层个体突变情况的变化
+    float ga_mutation_rate  = 0.25f; // 变异率 0.25f
+    float ga_mutation; // 基因变异码
+
+    // 突变与精英率每次衰减率值
+    float decay_rate = 0.05;
+
+    // 全局步骤
+    int ga_step;
+
+    // 等级演化初始分布
+    int high = 5;
+    int middle = 95;
+
+    // 保存本次迭代最优基因及其适应度
+    std::string ga_s;
+    double ga_minicost = INF;
+
+    // 写结果文件
+    char *ga_filename;
 
     // 网络相关的动态初始化参数
     std::vector<int> ga_server = ChooseServer::serverID; // 工作原码
     int ga_target_size = ChooseServer::serverID.size(); // 工作基因长度
-    double ga_minicost = INF;
-    std::string ga_s;
-    char *ga_filename;
 
-    // 与个体基因编码解码相关的参数
+    // 基因片段不同等级划分
+    // ServerID
     std::vector<int> ga_Id_server = ChooseServer::serverID;
     int size_Id_server = ChooseServer::serverID.size();
+    // ServerCandidate
     std::vector<int> ga_Candidate_server = ChooseServer::serverCandidate;
     int size_Candidate_server = ChooseServer::serverCandidate.size();
+    // ServerPossible
     std::vector<int> ga_possible_server = ChooseServer::serverPossible;
     int size_Possible_server = ChooseServer::serverPossible.size();
+
+    // 求解最小费用流
+    ZKW ga_run;
+    //MCMF ga_run;
 
     // 遗传算法结构体，包括适应与最优解
     struct ga_struct {
@@ -68,24 +86,63 @@ public:
     // 初始化化参数
     OurGA(char *filename) {
         std::cout<<"使用GA默认初始参数！"<<std::endl;
+
+        // 初始化种群大小
+        if (ga_target_size < 100) {
+            ga_size = 50;
+        }
+        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
+            ga_size = 30;
+        }
+        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
+            ga_size = 20;
+        }
+        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
+            ga_size = 15;
+        }
+        else {
+            ga_size = 10;
+        }
+
+        // 同等级基因大小的群体的衰减率
+        if (ga_target_size < 100) {
+            decay_e_rate = 0.70;
+        }
+        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
+            decay_e_rate = 0.75;
+        }
+        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
+            decay_e_rate = 0.80;
+        }
+        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
+            decay_e_rate = 0.85;
+        }
+        else {
+            decay_e_rate = 0.85;
+        }
+
+        // 精英在群体中的数量ga_size*ga_elitism_rate_now
+        esize = ceil(ga_size * ga_elitism_rate);
+
+        // 基因变异码
+        ga_mutation = RAND_MAX * ga_mutation_rate;
+
+        // 写结果文件
         ga_filename = filename;
 
+        // 网络相关的动态初始化参数
         ChooseServer::serverID.insert(ChooseServer::serverID.end(),
                                       ga_Candidate_server.begin(), ga_Candidate_server.end());
         ChooseServer::serverID.insert(ChooseServer::serverID.end(),
                                       ga_possible_server.begin(), ga_possible_server.end());
-
-        // 初始化工作基因变量
         ga_target_size = ChooseServer::serverID.size();
         ga_server = ChooseServer::serverID;
-        esize = ceil(ga_size * ga_elitism_rate);
-        ga_mutation = RAND_MAX * ga_mutation_rate;
 
         std::cout<<"GA length:"<<ga_target_size<<std::endl;
 
         //ZKW ga_run;
         ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID);
-        if (!(ga_run.minicost < INF)) {
+        if (ga_run.minicost > INF) {
             printf("No LP Solve!\n");
 
             bSolve = false;
@@ -141,6 +198,7 @@ public:
     void calc_fitness_server(ga_vector &population, int step) {
         // 查看种群个体基因序列
         //PrintGA(population);
+
         int tmp_esize;
         if (step == 0) {
             tmp_esize = 0;
@@ -149,7 +207,7 @@ public:
             tmp_esize = esize;
         }
 
-        for (int i=esize; i<ga_size; i++) {
+        for (int i=tmp_esize; i<ga_size; i++) {
             // 清空服务器节点放置缓存
             std::vector <int>().swap(ChooseServer::serverID);
             for (int j=0; j<ga_target_size; j++) {
@@ -190,6 +248,30 @@ public:
         }
     }
 
+    // 突变概率设计,不同阶层在不同时期的突破概率不同
+    int mutate_design() {
+        int g = rand() % 100;
+
+        if (ga_step % (mutate_step - 1) == 0) {
+            if (high < 40) {
+                high += 1;
+            }
+            if (middle > 60) {
+                middle -= 1;
+            }
+        }
+
+        if (g < high) {
+            return 1;
+        }
+        else if (g >= high && g < middle) {
+            return 2;
+        }
+        else {
+            return 3;
+        }
+    }
+
     // 突变操作（服务器）
     void mutate_server(ga_struct &member) {
         int choose = mutate_design();
@@ -224,30 +306,6 @@ public:
         (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
     }
 
-    // 突变概率设计
-    int mutate_design() {
-        int g = rand() % 100;
-
-        if (ga_step % (mutate_step - 1) == 0) {
-            if (high < 45) {
-                high += 1;
-            }
-            if (middle > 55) {
-                middle -= 2;
-            }
-        }
-
-        if (g < high) {
-            return 1;
-        }
-        else if (g >= high && g < middle) {
-            return 2;
-        }
-        else {
-            return 3;
-        }
-    }
-
     // 交换操作（服务器）
     void mate_server(ga_vector &population, ga_vector &buffer) {
         int spos;
@@ -274,7 +332,7 @@ public:
 
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
@@ -317,32 +375,14 @@ public:
 
     // 精英率与变异率衰减
     void decay(int step) {
-        int decay_e_rate;
-        if (ga_target_size < 100) {
-            decay_e_rate = 0.70;
-        }
-        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            decay_e_rate = 0.75;
-        }
-        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            decay_e_rate = 0.80;
-        }
-        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            decay_e_rate = 0.85;
-        }
-        else {
-            decay_e_rate = 0.90;
-        }
-
-
-        if ((step % decay_step) == (decay_step - 1)) {
+        if ((step % decay_e_step) == (decay_e_step - 1)) {
             if (ga_elitism_rate * (1 + decay_rate) < decay_e_rate) {
-                ga_elitism_rate *= (1 + decay_rate);
+                ga_elitism_rate *= 1 + decay_rate;
             }
             esize = ceil(ga_size * ga_elitism_rate);
 
             if (ga_mutation_rate * (1 + decay_rate) < 0.99) {
-                ga_mutation_rate *= (1 + decay_rate);
+                ga_mutation_rate *= 1 + decay_rate;
             }
             ga_mutation = RAND_MAX * ga_mutation_rate;
         }
@@ -364,7 +404,9 @@ public:
         for (int i=0; i<ga_max_iterate; i++) {
             ga_step = i;
 
-            decay(i);
+            // 精英率与变异率衰减
+            decay(ga_step);
+
             calc_fitness_server(*population, i);		// 计算适应度
             sort_by_fitness(*population);	// 对个体进行排序
             print_best(*population);		// 输出最好的个体
@@ -453,7 +495,7 @@ bool GA::GetPath(int i, int j) {
     std::cout<<"-->"<<j<<std::endl;
     std::cout<<"最短路径长度为:"<<VertexCost[i][j]<<std::endl;
 
-    if (getPath.empty() == false) {
+    if (!getPath.empty()) {
         return false;
     }
 
