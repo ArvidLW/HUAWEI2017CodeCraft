@@ -15,18 +15,34 @@
 #include "common.h"
 
 //#define Mc
-//#define Zk
+#define Zk
 
 //你要完成的功能总入口
 void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 {
     char* result;
+    double minCost;
     Graph G;
     G.init(topo);
-    //DirectOUT::outResult();//直接设置消费节点相连的网络节点为服务器，并输出结果
     ChooseServer::lpChoose();//线性规划选择服务器
     ChooseServer::printServerInfo();//打印所选服务器信息
+    ChooseServer::minCost=mc.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
+    timer.Begin();//计时开始
+//    WeGa wega(filename);
+//    wega.chooseServer();
 
+
+    timer.End();//计时结束
+//    std::cout<<"time: "<<timer.ms()<<std::endl;
+//    result=mc.getRoute();
+//    minCost=mc.minicost;
+//    printf("we get minCost : %.f\n" ,minCost);
+//    printf("%sminCost is : %.f\n\n%s\n",splitLine,minCost,result);
+//    printf(splitLine);
+//    write_result(result,filename);
+
+
+    //write_result(mcmf.s,filename);
 
     //OurGA ourGA = OurGA();
     //ourGA.GaAlgorithmServer(ChooseServer::serverID, ChooseServer::serverCandidate, Graph::nodeCount, Graph::arcCount, filename);
@@ -38,28 +54,16 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //ChooseServer::serverID.assign(&tmp[0], &tmp[sizeof(tmp)/ sizeof(int)]);
     //memcpy(&ChooseServer::serverID[0],tmp, sizeof(tmp));
 
-    timer.Begin();//计时开始
-    //int t0=clock();
     OurGA ourGA = OurGA(filename);
     if (ourGA.bSolve) {
         ourGA.GaAlgorithmServer();
     }
-
-#ifdef Mc
-    MCMF m;
-    result=m.run(Graph::nodeCount,Graph::arcCount);
-#endif // Mc
-
-#ifdef Zk
-    ZKW z;
-    result=z.run(Graph::nodeCount,Graph::arcCount);
-#endif // Zk
-
-    //std::cout<<"timer:"<<clock()-t0<<std::endl;
-    timer.End();//计时结束
-    std::cout<<"find mincost algorithm: "<<timer.ms()<<std::endl;
     printf(splitLine);
-//    write_result(result,filename);
-    //write_result(mcmf.s,filename);
+    //int t0=clock();
 
 }
+
+
+
+
+

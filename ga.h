@@ -25,11 +25,20 @@
 class OurGA {
 private:
     // 默认初始化参数
-    int ga_size = 30; // 种群大小 2048
-    int ga_max_iterate = 1000;	// 最大迭代次数 16384
-    float ga_elitism_rate = 0.05f; // 精英比率 0.10f
-    float ga_mutation_rate  = 0.75f; // 变异率 0.25f
-    float ga_mutation = RAND_MAX * ga_mutation_rate;
+    int ga_size = 50; // 种群大小 2048
+    int ga_max_iterate = 32000;	// 最大迭代次数 16384
+    float ga_elitism_rate = 0.25f; // 精英比率 0.10f
+    int esize;
+    float ga_mutation_rate  = 0.25f; // 变异率 0.25f
+    float ga_mutation;
+    int decay_step = 50;
+    float decay_rate = 0.05;
+    int ga_step;
+    int mutate_step = 50;
+    int high = 10;
+    int middle = 90;
+
+    //ZKW ga_run;
     MCMF ga_run;
 
     // 网络相关的动态初始化参数
@@ -63,22 +72,26 @@ public:
 
         ChooseServer::serverID.insert(ChooseServer::serverID.end(),
                                       ga_Candidate_server.begin(), ga_Candidate_server.end());
-//        ChooseServer::serverID.insert(ChooseServer::serverID.end(),
-//                                      ga_possible_server.begin(), ga_possible_server.end());
+        ChooseServer::serverID.insert(ChooseServer::serverID.end(),
+                                      ga_possible_server.begin(), ga_possible_server.end());
 
         // 初始化工作基因变量
         ga_target_size = ChooseServer::serverID.size();
         ga_server = ChooseServer::serverID;
+        esize = ceil(ga_size * ga_elitism_rate);
+        ga_mutation = RAND_MAX * ga_mutation_rate;
+
+        std::cout<<"GA length:"<<ga_target_size<<std::endl;
 
         //ZKW ga_run;
-        ga_run.run(Graph::nodeCount,Graph::arcCount);
+        ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID);
         if (!(ga_run.minicost < INF)) {
             printf("No LP Solve!\n");
 
             bSolve = false;
         }
         else {
-            write_result(ga_run.s, ga_filename);
+            write_result(ga_run.getRoute(), ga_filename);
             bSolve = true;
         }
     }
@@ -125,11 +138,18 @@ public:
     }
 
     // 计算适应度（服务器）
-    void calc_fitness_server(ga_vector &population) {
+    void calc_fitness_server(ga_vector &population, int step) {
         // 查看种群个体基因序列
         //PrintGA(population);
+        int tmp_esize;
+        if (step == 0) {
+            tmp_esize = 0;
+        }
+        else {
+            tmp_esize = esize;
+        }
 
-        for (int i=0; i<ga_size; i++) {
+        for (int i=esize; i<ga_size; i++) {
             // 清空服务器节点放置缓存
             std::vector <int>().swap(ChooseServer::serverID);
             for (int j=0; j<ga_target_size; j++) {
@@ -144,7 +164,7 @@ public:
             // 计算个体适应度
             if (!ChooseServer::serverID.empty()) {
                 //ZKW ga_run;
-                ga_run.run(Graph::nodeCount,Graph::arcCount);
+                ga_run.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
                 population[i].fitness = ga_run.minicost;
             }
             else {
@@ -154,7 +174,7 @@ public:
         }
     }
 
-    //  // 根据适应度对个体进行排序，从小到大排序
+    // 根据适应度对个体进行排序，从小到大排序
     static bool fitness_sort(ga_struct x, ga_struct y) {
         return (x.fitness < y.fitness);
     }
@@ -172,15 +192,60 @@ public:
 
     // 突变操作（服务器）
     void mutate_server(ga_struct &member) {
-        int ipos = rand() % ga_target_size;
+        int choose = mutate_design();
+        int ipos;
+        if (choose == 1) {
+            if (size_Id_server != 0) {
+                ipos = rand() % size_Id_server;
+            }
+            else {
+                ipos = 0;
 
-        if (rand() % 2 == 1){
-            member.str[ipos] = '1';
+                printf("May be something wrong!\n");
+            }
+        }
+        else if (choose == 2) {
+            if (size_Candidate_server != 0) {
+                ipos = size_Id_server + rand() % size_Candidate_server;
+            }
+            else {
+                ipos = rand() % size_Id_server;
+            }
         }
         else {
-            member.str[ipos] = '0';
+            if (size_Possible_server != 0) {
+                ipos = size_Id_server + size_Candidate_server + rand() % size_Possible_server;
+            }
+            else {
+                ipos = rand() % size_Id_server;
+            }
         }
-        //std::cout<<member.str[ipos]<<std::endl;
+
+        (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
+    }
+
+    // 突变概率设计
+    int mutate_design() {
+        int g = rand() % 100;
+
+        if (ga_step % (mutate_step - 1) == 0) {
+            if (high < 45) {
+                high += 1;
+            }
+            if (middle > 55) {
+                middle -= 2;
+            }
+        }
+
+        if (g < high) {
+            return 1;
+        }
+        else if (g >= high && g < middle) {
+            return 2;
+        }
+        else {
+            return 3;
+        }
     }
 
     // 交换操作（服务器）
@@ -188,15 +253,12 @@ public:
         int spos;
         int i1;
         int i2;
-        int esize = ceil(ga_size * ga_elitism_rate);
 
         // 精英群体（遗传）
         elitism(population, buffer, esize);
 
         // 与其它个体基因进行变异
         for (int i=esize; i<ga_size; i++) {
-//            i1 = rand() % (ga_size / 2);
-//            i2 = rand() % (ga_size / 2);
             i1 = rand() % ga_size;
             i2 = rand() % ga_size;
             spos = rand() % ga_target_size;
@@ -230,11 +292,11 @@ public:
             }
         }
 
-        if (ChooseServer::serverID.size()!=0) {
+        if (!ChooseServer::serverID.empty()) {
             //ZKW ga_run;
-            ga_run.run(Graph::nodeCount,Graph::arcCount);
+            ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID);
             if (ga_run.minicost < INF) {
-                write_result(ga_run.s,ga_filename);
+                write_result(ga_run.getRoute(),ga_filename);
             }
         }
     }
@@ -253,6 +315,39 @@ public:
         }
     }
 
+    // 精英率与变异率衰减
+    void decay(int step) {
+        int decay_e_rate;
+        if (ga_target_size < 100) {
+            decay_e_rate = 0.70;
+        }
+        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
+            decay_e_rate = 0.75;
+        }
+        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
+            decay_e_rate = 0.80;
+        }
+        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
+            decay_e_rate = 0.85;
+        }
+        else {
+            decay_e_rate = 0.90;
+        }
+
+
+        if ((step % decay_step) == (decay_step - 1)) {
+            if (ga_elitism_rate * (1 + decay_rate) < decay_e_rate) {
+                ga_elitism_rate *= (1 + decay_rate);
+            }
+            esize = ceil(ga_size * ga_elitism_rate);
+
+            if (ga_mutation_rate * (1 + decay_rate) < 0.99) {
+                ga_mutation_rate *= (1 + decay_rate);
+            }
+            ga_mutation = RAND_MAX * ga_mutation_rate;
+        }
+    }
+
     bool GaAlgorithmServer() {
         // 用于产生伪随机数的时间种子
         srand(unsigned(time(NULL)));
@@ -267,7 +362,10 @@ public:
 
         int t0=clock();
         for (int i=0; i<ga_max_iterate; i++) {
-            calc_fitness_server(*population);		// 计算适应度
+            ga_step = i;
+
+            decay(i);
+            calc_fitness_server(*population, i);		// 计算适应度
             sort_by_fitness(*population);	// 对个体进行排序
             print_best(*population);		// 输出最好的个体
 
