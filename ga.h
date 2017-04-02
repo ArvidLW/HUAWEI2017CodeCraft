@@ -52,6 +52,8 @@ private:
     // 等级演化初始分布
     int high = 45;
     int middle = 55;
+    int high_line = 10;
+    int middle_line = 90;
 
     // 保存本次迭代最优基因及其适应度
     std::string ga_s;
@@ -511,10 +513,10 @@ public:
         int g = rand() % 100;
 
         if (ga_step % (mutate_step - 1) == 0) {
-            if (high > 10) {
+            if (high > high_line) {
                 high -= 1;
             }
-            if (middle < 90) {
+            if (middle < middle_line) {
                 middle += 1;
             }
         }
