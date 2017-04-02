@@ -18,23 +18,28 @@
 
 #define MAX_COST 1e8
 // 85000000
-#define TIME_END 850000000
+#define TIME_END 85000000
 
 
 // 遗传算法实现函数
 class OurGA {
 private:
     // 默认初始化参数
-    int ga_max_iterate = 3200;	// 最大迭代次数 16384
 
+    // 种群基本参数
+    int ga_max_iterate = 3200;	// 最大迭代次数 16384
     int ga_size; // 种群大小 2048
 
+    // 初始化优秀基因与劣等基因变异率
+    double ga_init_good_rate = 0.01f;
+    double ga_init_bad_rate = 0.01f;
+
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 20; // 多少步进行精英增加以及变异率增加
+    int decay_e_step = 10; // 多少步进行精英增加以及变异率增加
     int decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
-    int mutate_step = 20; // 多少步后不同阶层个体突变情况的变化
+    int mutate_step = 10; // 多少步后不同阶层个体突变情况的变化
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
@@ -61,14 +66,14 @@ private:
 
     // 基因片段不同等级划分
     // ServerID
-    std::vector<int> ga_Id_server = ChooseServer::serverID;
-    int size_Id_server = ChooseServer::serverID.size();
+    std::vector<int> ga_Id_server;
+    int size_Id_server;
     // ServerCandidate
-    std::vector<int> ga_Candidate_server = ChooseServer::serverCandidate;
-    int size_Candidate_server = ChooseServer::serverCandidate.size();
+    std::vector<int> ga_Candidate_server;
+    int size_Candidate_server;
     // ServerPossible
-    std::vector<int> ga_possible_server = ChooseServer::serverPossible;
-    int size_Possible_server = ChooseServer::serverPossible.size();
+    std::vector<int> ga_possible_server;
+    int size_Possible_server;
 
     // 求解最小费用流
     ZKW ga_run;
@@ -83,6 +88,222 @@ private:
 
 public:
     bool bSolve;
+
+    // 将下标对应到serverID
+    std::vector<int> to_serverID(std::vector<int> tmp_serverID, int middle) {
+        std::vector<int> done_serverID;
+        int i = 0;
+
+        for (auto tmp = tmp_serverID.begin(); i < middle; ++i, ++tmp) {
+            done_serverID.push_back(*tmp);
+        }
+
+        return done_serverID;
+    }
+
+    // 第一条线的二分搜索
+    int binary_search_one(std::vector<int> bs_serverID, int low, int high, double *bs_minicost) {
+        std::vector<int> find_line_bs;
+        double minicost_bs = INF;
+        int i = 0; // 用于提前终止二维搜索
+        //如果无法找到解，那么默认为(high+low)/2
+        int real_middle = -1;
+
+        while(low<=high){
+            //中间位置计算,low+最高位置减去最低位置,右移一位,相当于除2.也可以用(high+low)/2
+            int middle=low + ((high-low)>>1);
+
+            //计算此时的耗费
+            find_line_bs = to_serverID(bs_serverID, middle);
+            ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
+            minicost_bs = ga_run.minicost;
+
+            // 二维搜索
+            if(i==8) {
+                // 最多二分八次
+                *bs_minicost = minicost_bs;
+
+                return real_middle;
+            }
+
+            if(minicost_bs < INF) {
+                // 有解，向左搜索
+                high=middle-1;
+                real_middle = middle;
+            }else {
+                // 无解，向右搜索
+                low=middle+1;
+            }
+
+            // 迭代次数统计
+            i++;
+        }
+
+        // 迭代资源未用完，代表已精确定位
+        if (i < 8) {
+            // 精确搜索到
+            *bs_minicost = minicost_bs;
+
+            return real_middle;
+        }
+    }
+
+    // 第二条线的二分搜索
+    // 此处需要做边界处理，当minicost_bs的值均为小于或大于one_minicost时取（candidate_size+possible_size）/2
+    int binary_search_two(std::vector<int> bs_serverID, double one_minicost, int low, int high) {
+        std::vector<int> find_line_bs;
+        double minicost_bs = INF;
+        int i = 0; // 用于提前终止二维搜索
+        //如果无法找到解，那么默认为(high+low)/2
+        int real_middle = -1;
+
+        while(low<=high){
+            //中间位置计算,low+最高位置减去最低位置,右移一位,相当于除2.也可以用(high+low)/2
+            int middle=low + ((high-low)>>1);
+
+            //计算此时的耗费
+            find_line_bs = to_serverID(bs_serverID, middle);
+            ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
+            minicost_bs = ga_run.minicost;
+
+            // 二维搜索
+            if(i==8) {
+                // 最多二分八次
+                return real_middle;
+            }
+
+            if(minicost_bs < one_minicost) {
+                // 比one_minicost小，可能不包含最优解集，向右搜索
+                low=middle+1;
+            }else {
+                // 比one_minicost大，可能包含太多最优解集，向左搜索
+                high=middle-1;
+                real_middle = high;
+            }
+
+            // 迭代次数统计
+            i++;
+        }
+
+        // 迭代资源未用完，代表已精确定位
+        if (i < 8) {
+            // 精确搜索到
+            return real_middle;
+        }
+    }
+
+    // 找分界线
+    bool finding_boundary() {
+        // 初始化临时变量
+        // ServerID
+        std::vector<int> ga_wk_tmp = ChooseServer::serverID;
+        int size_Id_tmp = ChooseServer::serverID.size();
+        // ServerCandidate
+        ga_wk_tmp.insert(ga_wk_tmp.end(),
+                         ChooseServer::serverCandidate.begin(), ChooseServer::serverCandidate.end());
+        int size_Candidate_tmp = ChooseServer::serverCandidate.size();
+        // ServerPossible
+        ga_wk_tmp.insert(ga_wk_tmp.end(),
+                         ChooseServer::serverPossible.begin(), ChooseServer::serverPossible.end());
+        int size_Possible_tmp = ChooseServer::serverPossible.size();
+
+        //*******************************第一分线****************************************//
+        // 用于保存第一条线的serverID和数组索引值
+        std::vector<int> find_line_one = ChooseServer::serverID;
+        int size_find_line_one = find_line_one.size();
+
+        // 计算初始serverID耗费
+        double minicost_tmp_one = INF;
+        ga_run.run(Graph::nodeCount, Graph::arcCount, find_line_one);
+        minicost_tmp_one = ga_run.minicost;
+
+        // 开始寻找第一条线
+        if (minicost_tmp_one < INF) {
+            // 在serverID于搜索
+            size_find_line_one = binary_search_one(ChooseServer::serverID, 0, size_Id_tmp, &minicost_tmp_one);
+
+            // 将第一条线的元素还原
+            std::vector <int>().swap(ChooseServer::serverID);
+            ChooseServer::serverID = to_serverID(ga_wk_tmp, size_find_line_one);
+        }
+        else {
+            // tested, Ling Bao
+            // 注意，此处假设serverID+candidate+possible一定有解，所以不做条件判断
+            //
+
+            // 在candidate和possible搜索，可将candidate与possible合并
+            size_find_line_one = binary_search_one(ga_wk_tmp, size_Id_tmp, ga_wk_tmp.size(), &minicost_tmp_one);
+
+            // 做边界处理
+            if (size_find_line_one == -1) {
+                std::cout<<"May be Original LP parameter is not suitable, I will use half of length!\n"<<std::endl;
+                std::cout<<"Warning, This may be cause some problem, Please check it again!\n"<<std::endl;
+                size_find_line_one = size_Id_tmp + ((ga_wk_tmp.size()-size_Id_tmp)>>1);
+            }
+
+            // 将第一条线的元素还原ChooseServer::serverID
+            std::vector <int>().swap(ChooseServer::serverID);
+            ChooseServer::serverID = to_serverID(ga_wk_tmp, size_find_line_one);
+
+            // 将第一条线的元素还原find_line_one
+            std::vector <int>().swap(find_line_one);
+            find_line_one = to_serverID(ga_wk_tmp, size_find_line_one);
+        }
+
+        //*******************************第二分线****************************************//
+        // 开始寻找第二条线
+        //
+        //注意：第一条线找到的serverID可能出现minicost=INF的情况（暂时不管）
+        //
+        double minicost_tmp_two;
+        if (minicost_tmp_one < INF) {
+            minicost_tmp_two = minicost_tmp_one;
+        }
+        else {
+            std::cout<<"ServerID's minicost is INF!"<<std::endl;
+        }
+
+        // 用于保存第二条线的serverID和数组索引值
+        std::vector<int> find_line_two = ga_wk_tmp;
+        int size_find_line_two = ga_wk_tmp.size();
+
+        // 开始第二条线的二分一维搜索
+        size_find_line_two = binary_search_two(ga_wk_tmp, minicost_tmp_two, size_find_line_one, size_find_line_two);
+
+        // 做边界处理
+        if (size_find_line_two == size_find_line_one || size_find_line_two == ga_wk_tmp.size()
+            || size_find_line_two == -1) {
+            std::cout<<"Can't solve the second line, I will get half of the length!\n"<<std::endl;
+            size_find_line_two = (size_find_line_one + ga_wk_tmp.size()) / 2;
+        }
+
+        // 将第二条线的元素还原serverPossible
+        //serverCandidate
+        std::vector <int>().swap(ChooseServer::serverCandidate);
+        for (int i = size_find_line_one; i < size_find_line_two; ++i) {
+            ChooseServer::serverCandidate.push_back(ga_wk_tmp[i]);
+        }
+
+        //serverPossible
+        std::vector <int>().swap(ChooseServer::serverPossible);
+        for (int j = size_find_line_two; j < ga_wk_tmp.size(); ++j) {
+            ChooseServer::serverPossible.push_back(ga_wk_tmp[j]);
+        }
+
+        // 基因片段不同等级划分
+        // ServerID
+        ga_Id_server = ChooseServer::serverID;
+        size_Id_server = ChooseServer::serverID.size();
+        // ServerCandidate
+        ga_Candidate_server = ChooseServer::serverCandidate;
+        size_Candidate_server = ChooseServer::serverCandidate.size();
+        // ServerPossible
+        ga_possible_server = ChooseServer::serverPossible;
+        size_Possible_server = ChooseServer::serverPossible.size();
+
+        return true;
+    }
+
     // 初始化化参数
     OurGA(char *filename) {
         std::cout<<"使用GA默认初始参数！"<<std::endl;
@@ -118,7 +339,7 @@ public:
             decay_e_rate = 0.85;
         }
         else {
-            decay_e_rate = 0.85;
+            decay_e_rate = 0.90;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
@@ -129,6 +350,9 @@ public:
 
         // 写结果文件
         ga_filename = filename;
+
+        // 二分一维搜索重新确定LP的两条线
+        finding_boundary();
 
         // 网络相关的动态初始化参数
         ChooseServer::serverID.insert(ChooseServer::serverID.end(),
@@ -142,7 +366,7 @@ public:
 
         //ZKW ga_run;
         ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID);
-        if (ga_run.minicost > INF) {
+        if (ga_run.minicost >= INF) {
             printf("No LP Solve!\n");
 
             bSolve = false;
@@ -159,6 +383,28 @@ public:
         ga_max_iterate = max_iterate;
         ga_elitism_rate = elitism_rate;
         ga_mutation_rate = mutation_rate;
+    }
+
+    // 初始化阶段，优秀基因段变异概率
+    int init_good_design() {
+        int init_good = RAND_MAX * ga_init_good_rate;
+        if (rand() < init_good) {
+            return 0;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    // 初始化阶段，劣等基因段变异概率
+    int init_bad_design() {
+        int init_bad = RAND_MAX * ga_init_bad_rate;
+        if (rand() < init_bad) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
     }
 
     // 初始化种群（服务器）
@@ -179,8 +425,20 @@ public:
             }
             else {
                 // 初始化其余个体基因
+                // 对基因序列进行分段初始化
                 for (int j=0; j<ga_target_size; j++) {
-                    citizen.str += std::to_string(rand() % 2);
+                    if (j >= 0 && j < ga_Id_server.size()) {
+                        // 第一段0～serverID.size(), 90%为1
+                        citizen.str += std::to_string(init_good_design());
+                    }
+                    else if (j >= ga_Id_server.size() && j < ga_Candidate_server.size()) {
+                        // 第三段serverCandidate.seze()+1~serverPossible.size(), 90%为0
+                        citizen.str += std::to_string(rand() % 2);
+                    }
+                    else {
+                        // 第二段serverID.size()+1~serverCandidate.size(),0与1一半一半
+                        citizen.str += std::to_string(init_bad_design());
+                    }
                 }
             }
 
