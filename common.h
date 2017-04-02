@@ -18,8 +18,8 @@
 #define CDN_COMMON_H
 
 
-#define MAXNODE 1000                //最大节点数
-#define MAXCONSUMER 500             //最大消费节点数
+#define MAXNODE 1002                //最大节点数
+#define MAXCONSUMER 502             //最大消费节点数
 #define MAXVALUE 1000.0             //设定的最大值
 #define MIN_VALUE 0.011              //用来界定选择服务器,serverID
 #define MIN_VALUE_ZERO 0.005        //用来界定所有备选服务器,serverCandidate
@@ -66,6 +66,7 @@ char splitLine[]="---------------------------------split line-------------------
 #include "mc_zk.h"          //4、mcmf和zkw共有头文件
 #include "mcmf.h"           //4.1、最小费用流mcmf
 #include "zkw.h"            //4.2、zkw
+#include "WeMCMF.h"         //4.3、
 
 ZKW mc;
 

@@ -95,10 +95,9 @@ struct Individual{
     Individual():cost{0} {}
 
     bool operator < (const Individual &d) const{
-        return cost<d.cost;
+        return cost>d.cost;//默认按升序，所以这改降序
     }
 };
-
 class WeGa {
 private:
     char * thefilename;
@@ -157,14 +156,13 @@ public:
     void chooseServer();//ga选择服务器
 
 };
-
 void WeGa::gainCommonGene(std::vector<Individual> &s,std::vector<Individual> &c) {
     printf(splitLine);
     int n=s.size()<5?s.size():5;
     int sizeD=n*(n-1)/2;
     printf("sizeD: %d\n",sizeD);
     Individual *d=new Individual[sizeD];
-    sort(s.begin(),s.end());
+    std::sort(s.begin(),s.end());
     printf("check: gapu[0].cost= %.f ,gapu[1].cost= %.f\n",s[0].cost,s[1].cost);
     for(int i=0;i<ChooseServer::serverID.size()+ChooseServer::serverCandidate.size();++i){
         int r=rand()%2;
