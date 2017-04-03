@@ -35,12 +35,12 @@ private:
     double ga_init_bad_rate = 0.10f;
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 3; // 多少步进行精英增加以及变异率增加 10
+    int decay_e_step = 2; // 多少步进行精英增加以及变异率增加 10 (2)
     double decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
     double decay_m_rate = 0.99;
-    int mutate_step = 5; // 多少步后不同阶层个体突变情况的变化 10
+    int mutate_step = 3; // 多少步后不同阶层个体突变情况的变化 10 (3)
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
@@ -129,7 +129,7 @@ public:
             minicost_bs = ga_run.minicost;
 
             // 二维搜索
-            if(i==9) {
+            if(i==10) {
                 // 最多二分八次
                 *bs_minicost = minicost_bs;
 
@@ -139,7 +139,7 @@ public:
             if(minicost_bs < INF) {
                 // 有解，向左搜索
                 high=middle-1;
-                real_middle = middle;
+                real_middle = middle+1;
             }else {
                 // 无解，向右搜索
                 low=middle+1;
@@ -150,7 +150,7 @@ public:
         }
 
         // 迭代资源未用完，代表已精确定位
-        if (i < 9) {
+        if (i < 10) {
             // 精确搜索到
             *bs_minicost = minicost_bs;
 
@@ -178,7 +178,7 @@ public:
             minicost_bs = ga_run.minicost;
 
             // 二维搜索
-            if(i==9) {
+            if(i==10) {
                 // 最多二分八次
                 return real_middle;
             }
@@ -189,7 +189,7 @@ public:
             }else {
                 // 比one_minicost大，可能包含太多最优解集，向左搜索
                 high=middle-1;
-                real_middle = high;
+                real_middle = high+1;
             }
 
             // 迭代次数统计
@@ -197,7 +197,7 @@ public:
         }
 
         // 迭代资源未用完，代表已精确定位
-        if (i < 9) {
+        if (i < 10) {
             // 精确搜索到
             return real_middle;
         }
@@ -600,6 +600,7 @@ public:
             // 基因交换(拼接)
             buffer[i].str = population[i1].str.substr(0, spos) +
                             population[i2].str.substr(spos, ga_target_size - spos);
+            buffer[i].fitness = INF;
 
             // 基因位变异
             if (rand() < ga_mutation) mutate_server(buffer[i]);
@@ -705,7 +706,7 @@ public:
     // 打印基因序列
     void PrintGA(ga_vector &population) {
         for (int i=0; i<ga_size; i++) {
-            std::cout<<(population)[i].str<<std::endl;
+            std::cout<<(population)[i].str<<"\t"<<(population)[i].fitness<<std::endl;
         }
     }
 
@@ -731,9 +732,14 @@ public:
             // 精英率与变异率衰减
             decay(ga_step);
 
-            calc_fitness_server(*population, i);		// 计算适应度
-            sort_by_fitness(*population);	// 对个体进行排序
-            print_best(*population);		// 输出最好的个体
+            // 计算适应度
+            calc_fitness_server(*population, i);
+
+            // 对个体进行排序
+            sort_by_fitness(*population);
+
+            // 输出最好的个体
+            print_best(*population);
 
             // ----已测试----
             if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1)) {
@@ -744,8 +750,11 @@ public:
                 return true;
             }
 
-            mate_server(*population, *buffer);		// 个体基因交换
-            swap(population, buffer);		// 交换父子群体
+            // 个体基因交换
+            mate_server(*population, *buffer);
+
+            // 交换父子群体
+            swap(population, buffer);
         }
 
         return 0;
@@ -754,79 +763,79 @@ public:
 
 
 
-/**
- * 存储任意两点之间的距离和路径，Floyd算法
- * */
-int VertexCost[MAXNODE][MAXNODE];
-int VertexPath[MAXNODE][MAXNODE];
-std::vector<int> getPath;
-
-
-struct GA {
-    // Floyd计算任意两点之间的距离
-    int ComputeCost(Arc *gMatrix[][MAXNODE], int vexNum);
-
-    // 递归寻路
-    void  Prn_Pass(int j , int k);
-    // 获取两点之间的路径
-    bool GetPath(int i, int j);
-};
-
-
-int GA::ComputeCost(Arc *gMatrix[][MAXNODE], int vexNum) {
-    for (int i = 0;i < vexNum;i++) {
-        for (int j = 0;j < vexNum;j++) {
-            if (i == j) {
-                VertexCost[i][j] = 0;
-            }
-            else if(gMatrix[i][j] != nullptr) {
-                VertexCost[i][j] = (gMatrix[i][j]->capacity) * (gMatrix[i][j]->cost);
-            }
-            else {
-                VertexCost[i][j] = MAX_COST;
-            }
-            VertexPath[i][j] = -1;
-        }
-    }
-
-    //关键代码部分
-    for (int k = 0;k < vexNum;k++) {
-        for (int i = 0;i < vexNum;i++) {
-            for (int j = 0;j < vexNum;j++) {
-                if (VertexCost[i][k] + VertexCost[k][j] < VertexCost[i][j]) {
-                    VertexCost[i][j] = VertexCost[i][k] + VertexCost[k][j];
-                    VertexPath[i][j] = k;
-                }
-            }
-        }
-    }
-
-    return 0;
-}
-
-// 获取两点之间的路径
-void  GA::Prn_Pass(int j , int k) {
-    if (VertexPath[j][k]!=-1) {
-        Prn_Pass(j,VertexPath[j][k]);
-        std::cout<<"-->"<<VertexPath[j][k];
-        getPath.push_back(VertexPath[j][k]);
-        Prn_Pass(VertexPath[j][k],k);
-    }
-}
-
-bool GA::GetPath(int i, int j) {
-    std::cout<<i<<"到"<<j<<"的最短路径为:";
-    std::cout<<i;
-    Prn_Pass(i, j);
-    std::cout<<"-->"<<j<<std::endl;
-    std::cout<<"最短路径长度为:"<<VertexCost[i][j]<<std::endl;
-
-    if (!getPath.empty()) {
-        return false;
-    }
-
-    return true;
-}
+///**
+// * 存储任意两点之间的距离和路径，Floyd算法
+// * */
+//int VertexCost[MAXNODE][MAXNODE];
+//int VertexPath[MAXNODE][MAXNODE];
+//std::vector<int> getPath;
+//
+//
+//struct GA {
+//    // Floyd计算任意两点之间的距离
+//    int ComputeCost(Arc *gMatrix[][MAXNODE], int vexNum);
+//
+//    // 递归寻路
+//    void  Prn_Pass(int j , int k);
+//    // 获取两点之间的路径
+//    bool GetPath(int i, int j);
+//};
+//
+//
+//int GA::ComputeCost(Arc *gMatrix[][MAXNODE], int vexNum) {
+//    for (int i = 0;i < vexNum;i++) {
+//        for (int j = 0;j < vexNum;j++) {
+//            if (i == j) {
+//                VertexCost[i][j] = 0;
+//            }
+//            else if(gMatrix[i][j] != nullptr) {
+//                VertexCost[i][j] = (gMatrix[i][j]->capacity) * (gMatrix[i][j]->cost);
+//            }
+//            else {
+//                VertexCost[i][j] = MAX_COST;
+//            }
+//            VertexPath[i][j] = -1;
+//        }
+//    }
+//
+//    //关键代码部分
+//    for (int k = 0;k < vexNum;k++) {
+//        for (int i = 0;i < vexNum;i++) {
+//            for (int j = 0;j < vexNum;j++) {
+//                if (VertexCost[i][k] + VertexCost[k][j] < VertexCost[i][j]) {
+//                    VertexCost[i][j] = VertexCost[i][k] + VertexCost[k][j];
+//                    VertexPath[i][j] = k;
+//                }
+//            }
+//        }
+//    }
+//
+//    return 0;
+//}
+//
+//// 获取两点之间的路径
+//void  GA::Prn_Pass(int j , int k) {
+//    if (VertexPath[j][k]!=-1) {
+//        Prn_Pass(j,VertexPath[j][k]);
+//        std::cout<<"-->"<<VertexPath[j][k];
+//        getPath.push_back(VertexPath[j][k]);
+//        Prn_Pass(VertexPath[j][k],k);
+//    }
+//}
+//
+//bool GA::GetPath(int i, int j) {
+//    std::cout<<i<<"到"<<j<<"的最短路径为:";
+//    std::cout<<i;
+//    Prn_Pass(i, j);
+//    std::cout<<"-->"<<j<<std::endl;
+//    std::cout<<"最短路径长度为:"<<VertexCost[i][j]<<std::endl;
+//
+//    if (!getPath.empty()) {
+//        return false;
+//    }
+//
+//    return true;
+//}
 
 
 #endif //CDN_GA_H
