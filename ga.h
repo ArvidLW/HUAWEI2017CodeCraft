@@ -31,15 +31,16 @@ private:
     int ga_size; // 种群大小 2048
 
     // 初始化优秀基因与劣等基因变异率
-    double ga_init_good_rate = 0.01f;
-    double ga_init_bad_rate = 0.01f;
+    double ga_init_good_rate = 0.10f;
+    double ga_init_bad_rate = 0.10f;
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 10; // 多少步进行精英增加以及变异率增加
-    int decay_e_rate;  // 不同等级基因大小的群体的衰减率
+    int decay_e_step = 3; // 多少步进行精英增加以及变异率增加 10
+    double decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
-    int mutate_step = 10; // 多少步后不同阶层个体突变情况的变化
+    double decay_m_rate = 0.99;
+    int mutate_step = 5; // 多少步后不同阶层个体突变情况的变化 10
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
@@ -50,10 +51,15 @@ private:
     int ga_step;
 
     // 等级演化初始分布
-    int high = 45;
-    int middle = 55;
+    // 正向递减high=30--->high_line=10;middle=70+++>middle_line=90.所以中间模糊基因段变异概率会慢慢变大
+    int high = 30;
+    int middle = 70;
     int high_line = 10;
     int middle_line = 90;
+    // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
+    bool hm_flag = false;
+    int hm_line_high = 35;
+    int hm_line_middle = 65;
 
     // 保存本次迭代最优基因及其适应度
     std::string ga_s;
@@ -91,6 +97,7 @@ private:
 public:
     bool bSolve;
 
+    // ----已测试----
     // 将下标对应到serverID
     std::vector<int> to_serverID(std::vector<int> tmp_serverID, int middle) {
         std::vector<int> done_serverID;
@@ -103,6 +110,7 @@ public:
         return done_serverID;
     }
 
+    // ----已测试----
     // 第一条线的二分搜索
     int binary_search_one(std::vector<int> bs_serverID, int low, int high, double *bs_minicost) {
         std::vector<int> find_line_bs;
@@ -121,7 +129,7 @@ public:
             minicost_bs = ga_run.minicost;
 
             // 二维搜索
-            if(i==8) {
+            if(i==9) {
                 // 最多二分八次
                 *bs_minicost = minicost_bs;
 
@@ -142,7 +150,7 @@ public:
         }
 
         // 迭代资源未用完，代表已精确定位
-        if (i < 8) {
+        if (i < 9) {
             // 精确搜索到
             *bs_minicost = minicost_bs;
 
@@ -150,6 +158,7 @@ public:
         }
     }
 
+    // ----已测试----
     // 第二条线的二分搜索
     // 此处需要做边界处理，当minicost_bs的值均为小于或大于one_minicost时取（candidate_size+possible_size）/2
     int binary_search_two(std::vector<int> bs_serverID, double one_minicost, int low, int high) {
@@ -169,7 +178,7 @@ public:
             minicost_bs = ga_run.minicost;
 
             // 二维搜索
-            if(i==8) {
+            if(i==9) {
                 // 最多二分八次
                 return real_middle;
             }
@@ -188,12 +197,13 @@ public:
         }
 
         // 迭代资源未用完，代表已精确定位
-        if (i < 8) {
+        if (i < 9) {
             // 精确搜索到
             return real_middle;
         }
     }
 
+    // ----已测试----
     // 找分界线
     bool finding_boundary() {
         // 初始化临时变量
@@ -306,6 +316,7 @@ public:
         return true;
     }
 
+    // ----已测试----
     // 初始化化参数
     OurGA(char *filename) {
         std::cout<<"使用GA默认初始参数！"<<std::endl;
@@ -379,7 +390,9 @@ public:
         }
     }
 
+    // ----已测试----
     // 初始化函数
+    // 备注，暂时不用
     OurGA(int size, int max_iterate, float elitism_rate, float mutation_rate) {
         ga_size = size;
         ga_max_iterate = max_iterate;
@@ -387,6 +400,7 @@ public:
         ga_mutation_rate = mutation_rate;
     }
 
+    // ----已测试----
     // 初始化阶段，优秀基因段变异概率
     int init_good_design() {
         int init_good = RAND_MAX * ga_init_good_rate;
@@ -398,6 +412,7 @@ public:
         }
     }
 
+    // ----已测试----
     // 初始化阶段，劣等基因段变异概率
     int init_bad_design() {
         int init_bad = RAND_MAX * ga_init_bad_rate;
@@ -409,6 +424,7 @@ public:
         }
     }
 
+    // ----已测试----
     // 初始化种群（服务器）
     void init_population_server(ga_vector &population, ga_vector &buffer ) {
         for (int i=0; i<ga_size; i++) {
@@ -429,11 +445,11 @@ public:
                 // 初始化其余个体基因
                 // 对基因序列进行分段初始化
                 for (int j=0; j<ga_target_size; j++) {
-                    if (j >= 0 && j < ga_Id_server.size()) {
+                    if (j >= 0 && j < size_Id_server) {
                         // 第一段0～serverID.size(), 90%为1
                         citizen.str += std::to_string(init_good_design());
                     }
-                    else if (j >= ga_Id_server.size() && j < ga_Candidate_server.size()) {
+                    else if (j >= size_Id_server && j < (size_Id_server + size_Candidate_server)) {
                         // 第三段serverCandidate.seze()+1~serverPossible.size(), 90%为0
                         citizen.str += std::to_string(rand() % 2);
                     }
@@ -454,11 +470,13 @@ public:
         //PrintGA(population);
     }
 
+    // ----已测试----
     // 计算适应度（服务器）
     void calc_fitness_server(ga_vector &population, int step) {
         // 查看种群个体基因序列
         //PrintGA(population);
 
+        // 第一次计算适应度精英数未知
         int tmp_esize;
         if (step == 0) {
             tmp_esize = 0;
@@ -492,6 +510,7 @@ public:
         }
     }
 
+    // ----已测试----
     // 根据适应度对个体进行排序，从小到大排序
     static bool fitness_sort(ga_struct x, ga_struct y) {
         return (x.fitness < y.fitness);
@@ -500,26 +519,11 @@ public:
         std::sort(population.begin(), population.end(), fitness_sort);
     }
 
-    // 精英群体
-    void elitism(ga_vector &population, ga_vector &buffer, int esize) {
-        for (int i=0; i<esize; i++) {
-            buffer[i].str = population[i].str;
-            buffer[i].fitness = population[i].fitness;
-        }
-    }
-
+    // ----已测试----
     // 突变概率设计,不同阶层在不同时期的突破概率不同
     int mutate_design() {
+        // ——————待测试——————
         int g = rand() % 100;
-
-        if (ga_step % (mutate_step - 1) == 0) {
-            if (high > high_line) {
-                high -= 1;
-            }
-            if (middle < middle_line) {
-                middle += 1;
-            }
-        }
 
         if (g < high) {
             return 1;
@@ -532,6 +536,7 @@ public:
         }
     }
 
+    // ----已测试----
     // 突变操作（服务器）
     void mutate_server(ga_struct &member) {
         int choose = mutate_design();
@@ -559,13 +564,23 @@ public:
                 ipos = size_Id_server + size_Candidate_server + rand() % size_Possible_server;
             }
             else {
-                ipos = rand() % size_Id_server;
+                ipos = rand() % (size_Id_server + size_Candidate_server);
             }
         }
 
         (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
     }
 
+    // ----已测试----
+    // 精英群体
+    void elitism(ga_vector &population, ga_vector &buffer, int esize) {
+        for (int i=0; i<esize; i++) {
+            buffer[i].str = population[i].str;
+            buffer[i].fitness = population[i].fitness;
+        }
+    }
+
+    // ----已测试----
     // 交换操作（服务器）
     void mate_server(ga_vector &population, ga_vector &buffer) {
         int spos;
@@ -581,7 +596,8 @@ public:
             i2 = rand() % ga_size;
             spos = rand() % ga_target_size;
 
-            // 基因交换
+            // ----已测试----
+            // 基因交换(拼接)
             buffer[i].str = population[i1].str.substr(0, spos) +
                             population[i2].str.substr(spos, ga_target_size - spos);
 
@@ -590,6 +606,7 @@ public:
         }
     }
 
+    // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
         std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
@@ -598,11 +615,11 @@ public:
         ga_minicost = gav[0].fitness;
     }
 
+    // ----已测试----
     // 基因解码
     void decode() {
         // 清空服务器节点放置缓存
-        //std::vector <int>().swap(ChooseServer::serverID);
-        ChooseServer::serverID.clear();
+        std::vector <int>().swap(ChooseServer::serverID);
 
         for (int i = 0; i < ga_s.size(); ++i) {
             if (ga_s[i] == '1') {
@@ -617,8 +634,66 @@ public:
                 write_result(ga_run.getRoute(),ga_filename);
             }
         }
+        else {
+            std::cout<<"Code is Error Error, Please check it!\n"<<std::endl;
+        }
     }
 
+    // ----已测试----
+    // population等级概率渐变
+    void population_change() {
+        // 循环突变
+        if (hm_flag) {
+            if (ga_step % mutate_step == (mutate_step - 1)) {
+                if (high < hm_line_high) {
+                    high += 1;
+                }
+                if (middle > hm_line_middle) {
+                    middle -= 1;
+                }
+            }
+
+            if (high == hm_line_high && middle == hm_line_middle) {
+                hm_flag = false;
+            }
+        }
+        else {
+            if (ga_step % mutate_step == (mutate_step - 1)) {
+                if (high > high_line) {
+                    high -= 1;
+                }
+                if (middle < middle_line) {
+                    middle += 1;
+                }
+            }
+
+            if (high == high_line && middle == middle_line) {
+                hm_flag = true;
+            }
+        }
+    }
+
+    // ----已测试----
+    // 精英率与变异率递增
+    void decay(int step) {
+        if ((step % decay_e_step) == (decay_e_step - 1)) {
+            // 精英率递增
+            if (ga_elitism_rate * (1 + decay_rate) < decay_e_rate) {
+                ga_elitism_rate *= 1 + decay_rate;
+            }
+            // 将精英率转变为种群中精英个体数目
+            esize = ceil(ga_size * ga_elitism_rate);
+
+            // 变异率递增
+            if (ga_mutation_rate * (1 + decay_rate) < decay_m_rate) {
+                ga_mutation_rate *= 1 + decay_rate;
+            }
+            // 将变异率转变为real突变数
+            ga_mutation = RAND_MAX * ga_mutation_rate;
+        }
+    }
+
+    // ----已测试----
     // 交换父子群体
     void swap(ga_vector *&population, ga_vector *&buffer) {
         ga_vector *temp = population;
@@ -626,25 +701,11 @@ public:
         buffer = temp;
     }
 
+    // ----已测试----
     // 打印基因序列
     void PrintGA(ga_vector &population) {
         for (int i=0; i<ga_size; i++) {
             std::cout<<(population)[i].str<<std::endl;
-        }
-    }
-
-    // 精英率与变异率衰减
-    void decay(int step) {
-        if ((step % decay_e_step) == (decay_e_step - 1)) {
-            if (ga_elitism_rate * (1 + decay_rate) < decay_e_rate) {
-                ga_elitism_rate *= 1 + decay_rate;
-            }
-            esize = ceil(ga_size * ga_elitism_rate);
-
-            if (ga_mutation_rate * (1 + decay_rate) < 0.99) {
-                ga_mutation_rate *= 1 + decay_rate;
-            }
-            ga_mutation = RAND_MAX * ga_mutation_rate;
         }
     }
 
@@ -664,6 +725,9 @@ public:
         for (int i=0; i<ga_max_iterate; i++) {
             ga_step = i;
 
+            // population等级概率渐变
+            population_change();
+
             // 精英率与变异率衰减
             decay(ga_step);
 
@@ -671,6 +735,7 @@ public:
             sort_by_fitness(*population);	// 对个体进行排序
             print_best(*population);		// 输出最好的个体
 
+            // ----已测试----
             if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1)) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
@@ -686,6 +751,7 @@ public:
         return 0;
     }
 };
+
 
 
 /**
