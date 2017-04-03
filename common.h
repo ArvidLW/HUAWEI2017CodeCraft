@@ -68,7 +68,7 @@ char splitLine[]="---------------------------------split line-------------------
 #include "zkw.h"            //4.2、zkw
 #include "WeMCMF.h"
 
-MCMF mc;
+ZKW mc;
 
 #include "WeGa.h"           //5、遗传
 #include "NeSearch.h"       //邻域搜索+禁忌
