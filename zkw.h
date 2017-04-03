@@ -250,6 +250,66 @@ public :
 
         }
 
+//    char* getRoute(){
+//        if(max_flow<all_demand)
+//        {
+//            sprintf(s,"NA\n");
+//            std::cout<<"NA\n"<<std::endl;
+//            minicost=INF;
+//        }
+//        else{
+//
+//            for(int i=0;i<node_num;i++)
+//            {
+//                for(int j=head[i];j!=-1;j=edge[j].next)
+//                {
+//                    if(j%2==0&&edge[j^1].cap>0)
+//                        gr[i][edge[j].v]=edge[j^1].cap;
+//                }
+//            }
+//            path.clear();
+//            deque<int> tmp;
+//            double cal=0;
+//            while(search_path(source_p,INF,0,tmp))
+//            {
+//                tmp.clear();
+//            }
+//            for(Path pa:path)
+//            {
+//                cal+=pa.cost;
+//            }
+//            cout<<minicost<<":"<<cal<<endl;
+//
+//            int offset{0};
+//            offset+=sprintf(s+offset,"%d\n\n",path_num);
+//            //sprintf(s,"%d\n\n",path_num);
+//            for(Path pa : path)
+//            {
+//                //pa.Print();
+//                if(pa.nodes.front()==source_p)
+//                    pa.nodes.pop_front();
+//                if(pa.nodes.back()==sink_p)
+//                    pa.nodes.pop_back();
+//                int t=pa.nodes.back();
+//                pa.nodes.push_back(Graph::netNode[t]->consumerId);
+//                //char s1[1000];
+//                for(int n : pa.nodes)
+//                {
+//                    offset+=sprintf(s+offset,"%d ",n);
+//                    // sprintf(s1,"%d ",n);
+//                    //strcat(s,s1);
+//                }
+//                offset+=sprintf(s+offset,"%.lf\n",pa.flow);
+//            }
+//            s[offset-1]='\0';
+//            //std::cout<<s<<std::endl;
+//        }
+
+
+//        return s;
+//
+//    }
+
 };
 
 #endif // ZKW_H_INCLUDED

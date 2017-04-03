@@ -33,7 +33,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     int s[]={13,23,55,60,76,92,96,97,127,138,152,154,170,189,190,200,224,246,268,290,320,347,352,360,392,426,436,469,504,506,539,553,561,565,576,583,608,625,646,676,706,730,759,764,769,773};
     ChooseServer::serverID.resize(sizeof(s)/sizeof(int));
     ChooseServer::serverID.assign(&s[0],&s[sizeof(s)/ sizeof(int)]);
-
+//
     WeMCMF m{ChooseServer::serverID};
 
     timer.Begin();//计时开始
@@ -42,7 +42,7 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     printf("lw minCost: %.f, time: %.f\n",m.minCost+ChooseServer::serverID.size()*Graph::serverFee,timer.ms());
     printf("lw minCost: %.f, time: %.f\n",m.minCost,timer.ms());
 
-//
+
 //    timer.Begin();//计时开始
 //    mc.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
 //    timer.End();

@@ -68,7 +68,7 @@ void WeMCMF::mcmf() {
             if(Graph::gNet[pre[i] ][i]->rCapacity > 0){
                 if(minFlow >= Graph::gNet[pre[i] ][i]->rCapacity){
                     minFlow = Graph::gNet[pre[i] ][i]->rCapacity;
-                    minFlowLoc=pre[i];
+                    minFlowLoc=i;
                 }
             }
             else{
@@ -103,7 +103,14 @@ void WeMCMF::mcmf() {
         }
 
 
-        //int cc=0;
+
+        int cc=0;
+//        printf("0++++%s",splitLine);
+//        for(int i=0;i<Graph::nodeCount;++i){
+//            printf("%d ",pre[i]);
+//        }
+//        printf("\n");
+
         std::queue<int> vQue;
         vQue.push(minFlowLoc);
         int vt;
@@ -116,29 +123,102 @@ void WeMCMF::mcmf() {
                     pre[p->node1] = -1;
                     mCost[p->node1] = INF;
                     vQue.push(p->node1);
-                    //++cc;
-                    Arc *q=Graph::netNode[p->node1]->arc;
-                    while(q!= nullptr){
-                        if(q->node1!=p->node0 && pre[q->node1]!=-1 && !isInQue[q->node1]){
-                            que.push_back(Graph::netNode[q->node1]->arc);
-                            isInQue.set(q->node1);
-                            //printf("q->node1: %d\n",q->node1);
-                        }
-                        q=q->next;
-                    }
 
+                    //++cc;
                 }
                 p=p->next;
             }
         }
 
-        for(int i=0;i<Graph::consumerCount;++i){
-            Arc *p=Graph::netNode[Graph::consumerNode[i] ]->arc;
-            if(p->mCapacity>0){
-                que.push_back(p);
-            }
-        }
-        //(4) best
+
+        //(3) 把距离变为很大的节点的相临的点,距离最短的推入，其节点前驱不为-1，思想是没有错的
+//        for(int i=0;i<Graph::nodeCount;++i){
+//            if(pre[i]==-1){
+//                //把距离他最小的点，且该点有前驱，推入
+//                Arc *q=Graph::netNode[i]->arc;
+//                int mTmp=INF+INF;
+//                int mLoc=-1;
+//                while(q!= nullptr){
+//                    //有可能有反向边，所以不加mTmp>mCost[q->node1]+Graph::gNet[q->node1][q->node0]->cost 这个判断
+//                    if(!isInQue[q->node1] && pre[q->node1]!=-1 && q->node1!=t && Graph::gNet[q->node1][q->node0]->mCapacity>0){
+//                        //查看谁离该点更近，记录下来
+//                        if(Graph::gNet[q->node1][q->node0]->rCapacity > 0){
+//                            if(mTmp>mCost[q->node1] - q->cost){
+//                                mTmp=mCost[q->node1] - q->cost;
+//                                mLoc=q->node1;
+//                            }
+//                        }
+//                        else{
+//                            if(mTmp>mCost[q->node1] + q->cost){
+//                                mTmp=mCost[q->node1] + q->cost;
+//                                mLoc=q->node1;
+//                            }
+//                        }
+//                    }
+//                    //将离得最近的推进去
+//                    if(mLoc!=-1){
+//                        que.push_back(Graph::netNode[mLoc ]->arc);
+//                        isInQue.set(mLoc );
+//                    }
+//                    q=q->next;
+//                }
+//
+//            }
+//        }
+
+        //把消费节点连接的网络节点pre,mCost重置
+//        for(int i=0;i<Graph::consumerCount;++i){
+//            pre[Graph::consumerNode[i] ]=-1;
+//            mCost[Graph::consumerNode[i] ]=INF;
+//        }
+        //(5),注意把消费节点连接的网络节点的前驱节点，推入，把消费节点连接的网络节点pre,mCost重置
+//        for(int i=0;i<Graph::consumerCount;++i){
+//            //消费节点连接的网络节点，的前驱节点
+//            //每个只推最小的
+//            Arc *p=Graph::netNode[Graph::consumerNode[i] ]->arc;
+//            int minTmp=INF+INF;
+//            int minLoc=-1;
+//            //p不为空，且p还有容量
+//            while(p!= nullptr){
+//                //查看谁离该点更近，记录下来
+//                if(!isInQue[p->node1]&& p->node1!=t && Graph::gNet[p->node1][p->node0]->mCapacity>0){
+//                    if(Graph::gNet[p->node1][p->node0]->rCapacity > 0){
+//                        if(minTmp>mCost[p->node1] - p->cost){
+//                            minTmp=mCost[p->node1] - p->cost;
+//                            minLoc=p->node1;
+//                        }
+//                    }
+//                    else{
+//                        if(minTmp>mCost[p->node1] + p->cost){
+//                            minTmp=mCost[p->node1] + p->cost;
+//                            minLoc=p->node1;
+//                        }
+//                    }
+//                }
+//
+//
+//                p=p->next;
+//            }
+//            //将离得最近的推进去
+//            if(minLoc!=-1){
+//                que.push_back(Graph::netNode[minLoc ]->arc);
+//                isInQue.set(minLoc );
+//            }
+//
+//        }
+//        printf("1++++%s",splitLine);
+//        for(int i=0;i<Graph::nodeCount;++i){
+//            printf("%d ",pre[i]);
+//        }
+//        printf("\n");
+//        pre[1001]=-1;
+//        mCost[1001]=INF;
+
+
+
+
+
+        //(4) pre node
 //        for(int i=0;i<Graph::nodeCount;++i){
 //
 //            if(pre[i]!=-1 && !isInQue[i]){
@@ -151,20 +231,17 @@ void WeMCMF::mcmf() {
 
 //        //(3) 把距离变为很大的节点的相临的点推入，其节点前驱不为-1，思想是没有错的
 //        int kk=0;
-////
+//
 //        for(int i=0;i<Graph::nodeCount;++i){
 //            if(pre[i]==-1){
 //                Arc *p=Graph::netNode[i]->arc;
-//
 //                while (p){
-//
 //                    if(Graph::netNode[p->node1]->arc!= nullptr ){
 //                        if(pre[p->node1]!=-1 && !isInQue[p->node1]){
 //                            que.push_back(Graph::netNode[p->node1]->arc);
 //                            isInQue.set(p->node1);
-//                            ++kk;
+//                            //++kk;
 //                        }
-//
 //                    }
 //
 //                    p=p->next;
@@ -172,7 +249,18 @@ void WeMCMF::mcmf() {
 //
 //            }
 //        }
-//        printf("cc = %d, kk=%d\n",cc,kk);
+
+//        for(int i=0;i<Graph::consumerCount;++i){
+//            //消费节点连接的网络节点
+//            //只推最小的
+//            if(pre[Graph::consumerNode[i] ]!=-1&&mCost[Graph::consumerNode[i] ]<20000&& !isInQue[Graph::consumerNode[i] ]){
+//                que.push_back(Graph::netNode[Graph::consumerNode[i] ]->arc);
+//                isInQue.set(Graph::consumerNode[i] );
+//                //printf("pre=%d ,mCost=%.f\n",pre[Graph::consumerNode[i] ],mCost[Graph::consumerNode[i]]);
+//            }
+//
+//        }
+        //printf("cc = %d, kk=%d\n",cc,kk);
         //(2)
 //        for(int i=0;i<Graph::nodeCount;++i){
 //            if(pre[i]!=-1 && !isInQue[i]){
@@ -243,6 +331,7 @@ bool WeMCMF::spfa() {
     int dir=1;
     //int sum=mCost[s];
     while(!que.empty()){
+
         p=que.front();
         que.pop_front();
 //        if(mCost[p->node0]*que.size()>sum){
@@ -250,8 +339,10 @@ bool WeMCMF::spfa() {
 //            continue;
 //        }
 //        sum=sum-mCost[p->node0];
+        //printf("----------------------------------enter spfa while pullptr %d->%d :%.f,  %.f,  %.f, %d\n",p->node0,p->node1,p->cost,mCost[p->node0],mCost[p->node1], dir);
         int node0=p->node0;
         while(p!= nullptr){
+
             if(p->rCapacity>0){
                 dir=-1;
             }else{
@@ -262,6 +353,8 @@ bool WeMCMF::spfa() {
                 }
             }
             if(mCost[p->node1] > p->cost*dir+mCost[p->node0]){
+                //printf("enter spfa while pullptr %d->%d :%.f,  %.f,  %.f, %d\n",p->node0,p->node1,p->cost,mCost[p->node0],mCost[p->node1], dir);
+
                 mCost[p->node1] = p->cost*dir+mCost[p->node0];
                 if(!isInQue[p->node1]){
                     isInQue.set(p->node1);
@@ -319,6 +412,7 @@ void WeMCMF::addSink() {
         p->node1=t;
         p->capacity=Graph::netNode[Graph::consumerNode[i]]->require;
         p->mCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
+        p->rCapacity=0;
         p->cost=0;
 
         p->next=Graph::netNode[Graph::consumerNode[i]]->arc;

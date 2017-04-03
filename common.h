@@ -66,7 +66,7 @@ char splitLine[]="---------------------------------split line-------------------
 #include "mc_zk.h"          //4、mcmf和zkw共有头文件
 #include "mcmf.h"           //4.1、最小费用流mcmf
 #include "zkw.h"            //4.2、zkw
-#include "WeMCMF.h"         //4.3、
+#include "WeMCMF.h"
 
 MCMF mc;
 
