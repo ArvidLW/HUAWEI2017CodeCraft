@@ -1,6 +1,30 @@
-//
-// Created by lw_co on 2017/4/1.
-//
+/*
+ * Copyright 2017
+ *
+ * WeMCMF.h
+ *
+ * 最小费用，最大流
+ *
+ * Date: March 26, 2017
+ * Author: Wei Liu, Ling Bao, Shangyue Zhou
+ *
+ * 思想：
+ *
+ * 在计算最小费用最大流时，要注意设置反向边，否则，费用会偏大
+ *
+ * 这里用两条有向边，包含两个容量，一个正向一个逆向
+ *
+ * c(a,b)=f(a,b)+f(b,a)
+ *
+ * 注意其中细节
+ *
+ * 优化，SLF,LLL
+ *
+ * 每次spfa在以前基础上计算
+ *
+ * $Id: WeMCMF.h,v 0.1 2017/03/26 00:30:35 lw Exp $
+ *
+ */
 
 #ifndef CDN_WEMCMF_H
 #define CDN_WEMCMF_H
@@ -28,18 +52,29 @@ struct WeMCMF {
     }
 };
 void WeMCMF::mcmf() {
+    memset(mCost,0x70, sizeof(mCost));
+    memset(pre,-1,sizeof(pre));
     double minFlow;
+    int minFlowLoc;
+    int u=s;
+    mCost[s]=0;
+    pre[s]=s;
+    isInQue.set(s);
+    que.push_back(Graph::netNode[s]->arc);
     while(spfa()){
         minFlow=INF;
         for(int i=t;i!=s;i=pre[i]){
+            //比较改为小于等于，方便找链路最前面的那个通过量最小的
             if(Graph::gNet[pre[i] ][i]->rCapacity > 0){
-                if(minFlow > Graph::gNet[pre[i] ][i]->rCapacity){
+                if(minFlow >= Graph::gNet[pre[i] ][i]->rCapacity){
                     minFlow = Graph::gNet[pre[i] ][i]->rCapacity;
+                    minFlowLoc=pre[i];
                 }
             }
             else{
-                if(minFlow > Graph::gNet[pre[i] ][i]->mCapacity ){
+                if(minFlow >= Graph::gNet[pre[i] ][i]->mCapacity ){
                     minFlow = Graph::gNet[pre[i] ][i]->mCapacity;
+                    minFlowLoc=pre[i];
                 }
             }
 
@@ -52,37 +87,154 @@ void WeMCMF::mcmf() {
                 minCost=minCost - minFlow*Graph::gNet[pre[i] ][i]->cost;
 
                 if(i!=t&&pre[i]!=s){
-                    //Graph::gNet[i ][pre[i]]->mCapacity=Graph::gNet[i ][pre[i]]->mCapacity + minFlow;
                     Graph::gNet[i ][pre[i]]->mCapacity=Graph::gNet[i ][pre[i]]->capacity - Graph::gNet[pre[i] ][i]->rCapacity;
 
                 }
-                printf("-1 %d -> %d ,minFlow= %.f, capacity= %.f\n",pre[i],i,minFlow,Graph::gNet[pre[i] ][i]->rCapacity);
+                //printf("-1 %d -> %d ,minFlow= %.f, capacity= %.f\n",pre[i],i,minFlow,Graph::gNet[pre[i] ][i]->rCapacity);
             }
             else{
                 Graph::gNet[pre[i] ][i]->mCapacity = Graph::gNet[pre[i] ][i]->mCapacity -minFlow;
                 minCost=minCost + minFlow*Graph::gNet[pre[i] ][i]->cost;
                 if(i!=t && pre[i]!=s){
                     Graph::gNet[i ][pre[i]]->rCapacity=Graph::gNet[i ][pre[i]]->capacity - Graph::gNet[pre[i] ][i]->mCapacity;
-
-                    //Graph::gNet[i ][pre[i]]->rCapacity=minFlow;
                 }
-                printf("+1 %d -> %d ,minFlow= %.f, capacity= %.f\n",pre[i],i,minFlow,Graph::gNet[pre[i] ][i]->mCapacity);
+                //printf("+1 %d -> %d ,minFlow= %.f, capacity= %.f\n",pre[i],i,minFlow,Graph::gNet[pre[i] ][i]->mCapacity);
             }
         }
+
+
+        int cc=0;
+        std::queue<int> vQue;
+        vQue.push(minFlowLoc);
+        int vt;
+        while(!vQue.empty()){
+            vt=vQue.front();
+            vQue.pop();
+            Arc *p=Graph::netNode[vt]->arc;
+            while(p!= nullptr){
+                if(pre[p->node1] == vt){
+                    pre[p->node1] = -1;
+                    mCost[p->node1] = INF;
+                    vQue.push(p->node1);
+                    ++cc;
+                }
+                p=p->next;
+            }
+        }
+
+
+        //(4) pre node
+//        for(int i=0;i<Graph::nodeCount;++i){
+//
+//            if(pre[i]!=-1 && !isInQue[i]){
+//                que.push_back(Graph::netNode[i]->arc);
+//                isInQue.set(i);
+//                //++cc;
+//            }
+//        }
+
+
+//        //(3) 把距离变为很大的节点的相临的点推入，其节点前驱不为-1，思想是没有错的
+//        int kk=0;
+////
+//        for(int i=0;i<Graph::nodeCount;++i){
+//            if(pre[i]==-1){
+//                Arc *p=Graph::netNode[i]->arc;
+//
+//                while (p){
+//
+//                    if(Graph::netNode[p->node1]->arc!= nullptr ){
+//                        if(pre[p->node1]!=-1 && !isInQue[p->node1]){
+//                            que.push_back(Graph::netNode[p->node1]->arc);
+//                            isInQue.set(p->node1);
+//                            ++kk;
+//                        }
+//
+//                    }
+//
+//                    p=p->next;
+//                }
+//
+//            }
+//        }
+//        printf("cc = %d, kk=%d\n",cc,kk);
+        //(2)
+//        for(int i=0;i<Graph::nodeCount;++i){
+//            if(pre[i]!=-1 && !isInQue[i]){
+//                Arc *p=Graph::netNode[i]->arc;
+//                while(p){
+//                    if(pre[p->node1]!=p->node0){
+//                        que.push_back(Graph::netNode[i]->arc);
+//                        isInQue.set(i);
+//                        break;
+//                    }
+//                    p=p->next;
+//                }
+//            }
+//        }
+        //(1)
+        //push in
+        //u=minFlowLoc;
+        for(int i=0;i<Graph::nodeCount;++i){
+            if(pre[i]!=-1 && !isInQue[i]){
+                if(!que.empty()){
+                    if(mCost[i]<mCost[que.front()->node0]){
+                        que.push_front(Graph::netNode[i]->arc);
+                    } else{
+                        que.push_back(Graph::netNode[i]->arc);
+                    }
+                } else{
+                    que.push_back(Graph::netNode[i]->arc);
+                }
+
+                isInQue.set(i);
+            }
+        }
+
+//        while(pre[u]!=s){
+//            que.push_back(Graph::netNode[pre[u]]->arc);
+//            isInQue.set(pre[u]);
+//            vQue.push(pre[u]);
+//            u=pre[u];
+//        }
+//        while(!vQue.empty()){
+//            vt=vQue.front();
+//            vQue.pop();
+//            Arc *p=Graph::netNode[vt]->arc;
+//            while(p!= nullptr){
+//                if(pre[p->node1] == vt){
+//                    que.push_back(Graph::netNode[p->node1]->arc);
+//                    isInQue.set(p->node1);
+//                    vQue.push(p->node1);
+//                }
+//                p=p->next;
+//            }
+//
+//        }
     }
+    //当流量充满时一些点不能经过，作如下处理，将该点后面受影响的值改为INF
+
+    //然后设置一个点为起动点供spfa,该点为此次寻找链路的minFlowLoc的后继节点，的前
+
 }
 bool WeMCMF::spfa() {
-    memset(mCost,0x70, sizeof(mCost));
-    memset(pre,-1,sizeof(pre));
-    mCost[s]=0;
-    pre[s]=s;
-    isInQue.set(s);
-    que.push_back(Graph::netNode[s]->arc);
+//    memset(mCost,0x70, sizeof(mCost));
+//    memset(pre,-1,sizeof(pre));
+//    mCost[u]=0;
+//    pre[u]=s;
+//    isInQue.set(u);
+//    que.push_back(Graph::netNode[u]->arc);
     Arc *p,*q;
     int dir=1;
+    //int sum=mCost[s];
     while(!que.empty()){
         p=que.front();
         que.pop_front();
+//        if(mCost[p->node0]*que.size()>sum){
+//            que.push_back(p);
+//            continue;
+//        }
+//        sum=sum-mCost[p->node0];
         int node0=p->node0;
         while(p!= nullptr){
             if(p->rCapacity>0){
@@ -113,6 +265,7 @@ bool WeMCMF::spfa() {
                         }
                     }
                 }
+                //sum=sum+mCost[p->node1];
                 pre[p->node1]=p->node0;
             }
             p=p->next;
