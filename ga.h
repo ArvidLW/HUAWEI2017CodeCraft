@@ -27,7 +27,7 @@ private:
     // 默认初始化参数
 
     // 种群基本参数
-    int ga_max_iterate = 3200;	// 最大迭代次数 16384
+    int ga_max_iterate = 32000;	// 最大迭代次数 16384
     int ga_size; // 种群大小 2048
 
     // 初始化优秀基因与劣等基因变异率
@@ -35,12 +35,12 @@ private:
     double ga_init_bad_rate = 0.10f;
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 2; // 多少步进行精英增加以及变异率增加 10 (2)
+    int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10 (2)
     double decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
     double decay_m_rate = 0.99;
-    int mutate_step = 3; // 多少步后不同阶层个体突变情况的变化 10 (3)
+    int mutate_step = 1; // 多少步后不同阶层个体突变情况的变化 10 (3)
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
@@ -58,8 +58,8 @@ private:
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
     bool hm_flag = false;
-    int hm_line_high = 35;
-    int hm_line_middle = 65;
+    int hm_line_high = 40;
+    int hm_line_middle = 60;
 
     // 保存本次迭代最优基因及其适应度
     std::string ga_s;
@@ -125,8 +125,7 @@ public:
 
             //计算此时的耗费
             find_line_bs = to_serverID(bs_serverID, middle);
-            ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
-            minicost_bs = ga_run.minicost;
+            minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
 
             // 二维搜索
             if(i==10) {
@@ -174,8 +173,7 @@ public:
 
             //计算此时的耗费
             find_line_bs = to_serverID(bs_serverID, middle);
-            ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
-            minicost_bs = ga_run.minicost;
+            minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
 
             // 二维搜索
             if(i==10) {
@@ -226,8 +224,7 @@ public:
 
         // 计算初始serverID耗费
         double minicost_tmp_one = INF;
-        ga_run.run(Graph::nodeCount, Graph::arcCount, find_line_one);
-        minicost_tmp_one = ga_run.minicost;
+        minicost_tmp_one = ga_run.run(Graph::nodeCount, Graph::arcCount, find_line_one);
 
         // 开始寻找第一条线
         if (minicost_tmp_one < INF) {
@@ -378,8 +375,7 @@ public:
         std::cout<<"GA length:"<<ga_target_size<<std::endl;
 
         //ZKW ga_run;
-        ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID);
-        if (ga_run.minicost >= INF) {
+        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) >= INF) {
             printf("No LP Solve!\n");
 
             bSolve = false;
@@ -500,8 +496,7 @@ public:
             // 计算个体适应度
             if (!ChooseServer::serverID.empty()) {
                 //ZKW ga_run;
-                ga_run.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
-                population[i].fitness = ga_run.minicost;
+                population[i].fitness = ga_run.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
             }
             else {
                 // 没有服务节点的个体
@@ -610,7 +605,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
@@ -630,8 +625,7 @@ public:
 
         if (!ChooseServer::serverID.empty()) {
             //ZKW ga_run;
-            ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID);
-            if (ga_run.minicost < INF) {
+            if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) < INF) {
                 write_result(ga_run.getRoute(),ga_filename);
             }
         }

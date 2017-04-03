@@ -70,4 +70,5 @@ double all_demand;//所有消费结点的总需求
 int search_edge[1010][1010];
 double gr[1010][1010];
 double search_cost[1010][1010];
+
 #endif // GLOBAL_H_INCLUDED
