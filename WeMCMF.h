@@ -120,6 +120,15 @@ void WeMCMF::mcmf() {
                     Arc *q=Graph::netNode[p->node1]->arc;
                     while(q!= nullptr){
                         if(q->node1!=p->node0 && pre[q->node1]!=-1 && !isInQue[q->node1]){
+//                            if(!que.empty()){
+//                                if(mCost[q->node1]<mCost[que.front()->node0]){
+//                                    que.push_front(Graph::netNode[q->node1]->arc);
+//                                } else{
+//                                    que.push_back(Graph::netNode[q->node1]->arc);
+//                                }
+//                            } else{
+//                                que.push_back(Graph::netNode[q->node1]->arc);
+//                            }
                             que.push_back(Graph::netNode[q->node1]->arc);
                             isInQue.set(q->node1);
                             //printf("q->node1: %d\n",q->node1);
@@ -134,8 +143,19 @@ void WeMCMF::mcmf() {
 
         for(int i=0;i<Graph::consumerCount;++i){
             Arc *p=Graph::netNode[Graph::consumerNode[i] ]->arc;
-            if(p->mCapacity>0){
+            if(p->mCapacity>0 && !isInQue[p->node0]){
+
+                if(!que.empty()){
+                    if(mCost[p->node0]<mCost[que.front()->node0]){
+                        que.push_front(Graph::netNode[p->node0]->arc);
+                     } else{
+                            que.push_back(Graph::netNode[p->node0]->arc);
+                     }
+                } else{
+                    que.push_back(Graph::netNode[p->node0]->arc);
+                }
                 que.push_back(p);
+                isInQue.set(p->node0);
             }
         }
         //(4) best
