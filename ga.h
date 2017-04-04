@@ -31,8 +31,8 @@ private:
     int ga_size; // 种群大小 2048
 
     // 初始化优秀基因与劣等基因变异率
-    double ga_init_good_rate = 0.10f;
-    double ga_init_bad_rate = 0.10f;
+    double ga_init_good_rate = 0.20f;
+    double ga_init_bad_rate = 0.05f;
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
 
@@ -49,8 +49,6 @@ private:
     int init_mutation_nums = 50; // 初始基因点位可变异数目
     int min_mutation_nums = 2;
     int decay_mutation_ga = 1;
-    bool b_mutation_spos = false;
-    int step_mutation_spos = 50;
 
     // 突变与精英率每次衰减率值
     float decay_rate = 0.05;
@@ -60,16 +58,16 @@ private:
 
     // 等级演化初始分布
     // 正向递减high=30--->high_line=10;middle=70+++>middle_line=90.所以中间模糊基因段变异概率会慢慢变大
-    int high = 30;
-    int middle = 70;
-    int high_line = 10;
+    int high = 40;
+    int middle = 80;
+    int high_line = 30;
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
     bool hm_flag = false;
-    int hm_line_high = 35;
-    int hm_line_middle = 65;
+    int hm_line_high = 50;
+    int hm_line_middle = 80;
     int step_begin = 0;
-    int steps_stop = 5;
+    int steps_stop = 1;
 
     // 保存本次迭代最优基因及其适应度
     std::string ga_s;
@@ -346,7 +344,7 @@ public:
             ga_size = 20;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 10;
+            ga_size = 15;
         }
         else {
             ga_size = 8;
@@ -451,6 +449,18 @@ public:
                 for (int j=0; j<ga_target_size; j++) {
                     citizen.str += std::to_string(1);
                 }
+                ga_s.clear();
+                ga_s = citizen.str;
+            }
+            else if (i == 1) {
+                // 将最优个体基因加入种群
+                for (int j=0; j<size_Id_server; j++) {
+                    citizen.str += std::to_string(1);
+                }
+                for (int k=size_Id_server; k<ga_target_size; k++) {
+                    citizen.str += std::to_string(1);
+                }
+
                 ga_s.clear();
                 ga_s = citizen.str;
             }
