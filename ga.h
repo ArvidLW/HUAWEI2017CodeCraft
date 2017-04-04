@@ -381,13 +381,13 @@ public:
             memory_size_g = 2500;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            memory_size_g = 1600;
+            memory_size_g = 3600;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            memory_size_g = 900;
+            memory_size_g = 2500;
         }
         else {
-            memory_size_g = 400;
+            memory_size_g = 1600;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
