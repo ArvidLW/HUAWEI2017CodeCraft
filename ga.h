@@ -18,7 +18,8 @@
 
 #define MAX_COST 1e8
 // 85000000
-#define TIME_END 85000000
+#define TIME_END 88000000
+#define MEMORY_SIZE 1000
 
 
 // 遗传算法实现函数
@@ -35,6 +36,9 @@ private:
     double ga_init_bad_rate = 0.05f;
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
+
+    // 用于字符串对比的vector数组
+    std::vector<string> str_memory[MEMORY_SIZE];
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
     int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
@@ -335,19 +339,19 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 50;
+            ga_size = 64;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 30;
+            ga_size = 36;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            ga_size = 20;
+            ga_size = 25;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 15;
+            ga_size = 16;
         }
         else {
-            ga_size = 8;
+            ga_size = 9;
         }
 
         // 同等级基因大小的群体的衰减率
@@ -803,7 +807,7 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 200) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 500) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
