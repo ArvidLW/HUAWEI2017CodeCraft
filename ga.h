@@ -31,8 +31,8 @@ private:
     int ga_size; // 种群大小 2048
 
     // 初始化优秀基因与劣等基因变异率
-    double ga_init_good_rate = 0.20f;
-    double ga_init_bad_rate = 0.05f;
+    double ga_init_good_rate = 0.05f;
+    double ga_init_bad_rate = 0.10f;
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
 
@@ -53,25 +53,25 @@ private:
     float ga_mutation; // 基因变异码
 
     int init_mutation_nums = 10; // 初始基因点位可变异数目
-    int min_mutation_nums = 2;
+    int min_mutation_nums = 1;
     int decay_mutation_ga = 1;
 
     // 突变与精英率每次衰减率值
-    float decay_rate = 0.05;
+    float decay_rate = 0.10;
 
     // 全局步骤
     int ga_step;
 
     // 等级演化初始分布
     // 正向递减high=30--->high_line=10;middle=70+++>middle_line=90.所以中间模糊基因段变异概率会慢慢变大
-    int high = 40;
-    int middle = 80;
-    int high_line = 30;
+    int high = 30;
+    int middle = 60;
+    int high_line = 20;
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
     bool hm_flag = false;
-    int hm_line_high = 50;
-    int hm_line_middle = 80;
+    int hm_line_high = 25;
+    int hm_line_middle = 85;
     int step_begin = 0;
     int steps_stop = 1;
 
@@ -268,7 +268,7 @@ public:
             if (size_find_line_one == -1) {
                 std::cout<<"May be Original LP parameter is not suitable, I will use half of length!\n"<<std::endl;
                 std::cout<<"Warning, This may be cause some problem, Please check it again!\n"<<std::endl;
-                size_find_line_one = size_Id_tmp + ((ga_wk_tmp.size()-size_Id_tmp)>>1);
+                size_find_line_one = size_Id_tmp + (ga_wk_tmp.size()-size_Id_tmp) / 3;
             }
 
             // 将第一条线的元素还原ChooseServer::serverID
@@ -304,7 +304,7 @@ public:
         if (size_find_line_two == size_find_line_one || size_find_line_two == ga_wk_tmp.size()
             || size_find_line_two == -1) {
             std::cout<<"Can't solve the second line, I will get half of the length!\n"<<std::endl;
-            size_find_line_two = (size_find_line_one + ga_wk_tmp.size()) / 2;
+            size_find_line_two = (size_find_line_one + ga_wk_tmp.size()) / 3;
         }
 
         // 将第二条线的元素还原serverPossible
@@ -341,19 +341,19 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 64;
+            ga_size = 80;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 36;
+            ga_size = 50;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            ga_size = 25;
+            ga_size = 30;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 16;
+            ga_size = 20;
         }
         else {
-            ga_size = 9;
+            ga_size = 15;
         }
 
         // 同等级基因大小的群体的衰减率
@@ -375,19 +375,19 @@ public:
 
         // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
         if (ga_target_size < 100) {
-            memory_size_g = 1600;
+            memory_size_g = 1200;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            memory_size_g = 1600;
+            memory_size_g = 1000;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            memory_size_g = 1600;
+            memory_size_g = 800;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            memory_size_g = 800;
+            memory_size_g = 600;
         }
         else {
-            memory_size_g = 800;
+            memory_size_g = 400;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
@@ -851,7 +851,6 @@ public:
     bool GaAlgorithmServer() {
         // 用于产生伪随机数的时间种子
         srand(unsigned(time(NULL)));
-        //srand(unsigned(0));
 
         ga_vector pop_alpha, pop_beta;
         ga_vector *population, *buffer;
@@ -894,7 +893,7 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 500) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 200) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
