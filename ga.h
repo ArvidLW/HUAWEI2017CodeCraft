@@ -19,7 +19,6 @@
 #define MAX_COST 1e8
 // 85000000
 #define TIME_END 88000000
-#define MEMORY_SIZE 1000
 
 
 // 遗传算法实现函数
@@ -40,7 +39,8 @@ private:
     // 用于字符串对比的vector数组
     // 全局变量
     std::vector<string> str_memory;
-    int memory_g_steps = 100;
+    int memory_g_steps = 50;
+    int memory_size_g; // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
     int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
@@ -373,6 +373,23 @@ public:
             decay_e_rate = 0.90;
         }
 
+        // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
+        if (ga_target_size < 100) {
+            memory_size_g = 1600;
+        }
+        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
+            memory_size_g = 1000;
+        }
+        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
+            memory_size_g = 800;
+        }
+        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
+            memory_size_g = 600;
+        }
+        else {
+            memory_size_g = 400;
+        }
+
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
         esize = ceil(ga_size * ga_elitism_rate);
 
@@ -444,7 +461,7 @@ public:
     // ----已测试----
     // 向str_memory中写入string字符串
     bool insert_string_memory(std::string tmp_string) {
-        if (str_memory.size() < MEMORY_SIZE) {
+        if (str_memory.size() < memory_size_g) {
             // vector数组未满，直接push_back
             str_memory.push_back(tmp_string);
 
@@ -456,7 +473,7 @@ public:
             vector<string>::iterator iter_delete = str_memory.begin();
 
             // 随机删除一个vector元素
-            rand_remove = rand() % MEMORY_SIZE;
+            rand_remove = rand() % memory_size_g;
             iter_delete += rand_remove;
             str_memory.erase(iter_delete);
 
@@ -834,6 +851,7 @@ public:
     bool GaAlgorithmServer() {
         // 用于产生伪随机数的时间种子
         srand(unsigned(time(NULL)));
+        //srand(unsigned(0));
 
         ga_vector pop_alpha, pop_beta;
         ga_vector *population, *buffer;
