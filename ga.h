@@ -33,6 +33,8 @@ private:
     // 初始化优秀基因与劣等基因变异率
     double ga_init_good_rate = 0.10f;
     double ga_init_bad_rate = 0.10f;
+    double ga_line_one_minicost = INF;
+    int ga_line_one_middle = -1;
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
     int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
@@ -132,21 +134,28 @@ public:
             int middle=low + ((high-low)>>1);
 
             //计算此时的耗费
+            std::vector <int>().swap(find_line_bs);
             find_line_bs = to_serverID(bs_serverID, middle);
+            minicost_bs = INF;
             minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
 
             // 二维搜索
             if(i==10) {
                 // 最多二分八次
-                *bs_minicost = minicost_bs;
+                *bs_minicost = ga_line_one_minicost;
 
-                return real_middle;
+                return ga_line_one_middle;
             }
 
             if(minicost_bs < INF) {
                 // 有解，向左搜索
                 high=middle-1;
                 real_middle = middle+1;
+
+                if (ga_line_one_minicost > minicost_bs) {
+                    ga_line_one_minicost = minicost_bs;
+                    ga_line_one_middle = find_line_bs.size();
+                }
             }else {
                 // 无解，向右搜索
                 low=middle+1;
@@ -159,9 +168,9 @@ public:
         // 迭代资源未用完，代表已精确定位
         if (i < 10) {
             // 精确搜索到
-            *bs_minicost = minicost_bs;
+            *bs_minicost = ga_line_one_minicost;
 
-            return real_middle;
+            return ga_line_one_middle;
         }
     }
 
