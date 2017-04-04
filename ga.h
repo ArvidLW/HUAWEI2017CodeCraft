@@ -38,7 +38,9 @@ private:
     int ga_line_one_middle = -1;
 
     // 用于字符串对比的vector数组
-    std::vector<string> str_memory[MEMORY_SIZE];
+    // 全局变量
+    std::vector<string> str_memory;
+    int memory_g_steps = 100;
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
     int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
@@ -440,6 +442,48 @@ public:
     }
 
     // ----已测试----
+    // 向str_memory中写入string字符串
+    bool insert_string_memory(std::string tmp_string) {
+        if (str_memory.size() < MEMORY_SIZE) {
+            // vector数组未满，直接push_back
+            str_memory.push_back(tmp_string);
+
+            return true;
+        }
+        else {
+            // 用于记录随机删除的位置
+            int rand_remove;
+            vector<string>::iterator iter_delete = str_memory.begin();
+
+            // 随机删除一个vector元素
+            rand_remove = rand() % MEMORY_SIZE;
+            iter_delete += rand_remove;
+            str_memory.erase(iter_delete);
+
+            // push_back基因字符串
+            str_memory.push_back(tmp_string);
+        }
+    }
+
+    // ----已测试----
+    // 用于确定该基因序列是否已经产生过
+    bool compare_string(std::string tmp_string) {
+        bool b_equal = false;
+
+        // 进行对比
+        for (int i = 0; i < str_memory.size(); ++i) {
+            if (str_memory[i].compare(tmp_string) == 0) {
+                b_equal = true;
+
+                break;
+            }
+        }
+
+        // 返回对比结果，true为存在
+        return b_equal;
+    }
+
+    // ----已测试----
     // 初始化种群（服务器）
     void init_population_server(ga_vector &population, ga_vector &buffer ) {
         for (int i=0; i<ga_size; i++) {
@@ -448,25 +492,30 @@ public:
             citizen.str.erase();
 
             // 初始化个体基因
-            if (i == 0) {
+            if (i == 0 || i == 1) {
                 // 将最优个体基因加入种群
                 for (int j=0; j<ga_target_size; j++) {
                     citizen.str += std::to_string(1);
                 }
-                ga_s.clear();
-                ga_s = citizen.str;
+
+                // 将基因存入str_memory
+                insert_string_memory(citizen.str);
             }
-            else if (i == 1) {
+            else if (i == 2) {
                 // 将最优个体基因加入种群
                 for (int j=0; j<size_Id_server; j++) {
                     citizen.str += std::to_string(1);
                 }
                 for (int k=size_Id_server; k<ga_target_size; k++) {
-                    citizen.str += std::to_string(1);
+                    citizen.str += std::to_string(0);
                 }
 
+                // 保存最优解到全局ga_s
                 ga_s.clear();
                 ga_s = citizen.str;
+
+                // 将基因存入str_memory
+                insert_string_memory(citizen.str);
             }
             else {
                 // 初始化其余个体基因
@@ -485,6 +534,10 @@ public:
                         citizen.str += std::to_string(init_bad_design());
                     }
                 }
+
+                // 将基因存入str_memory
+                // 因为是随机初始化，可以大致认为每个个体的基因序列均不相同
+                insert_string_memory(citizen.str);
             }
 
             // 将个体放入种群
@@ -630,6 +683,7 @@ public:
         elitism(population, buffer, esize);
 
         // 与其它个体基因进行变异
+        int memory_l_step = 0;
         for (int i=esize; i<ga_size; i++) {
             i1 = rand() % ga_size;
             i2 = rand() % ga_size;
@@ -643,13 +697,28 @@ public:
 
             // 基因位变异
             if (rand() < ga_mutation) mutate_server(buffer[i]);
+
+            // ----已测试----
+            // 将突变个体基因存入str_memory
+            if (!compare_string(buffer[i].str)) {
+                insert_string_memory(buffer[i].str);
+            }
+            else {
+                // 需做边界处理，以防出现死循环；定义全局变量memory_g_steps,大于此参数，将把这个参数赋给buffer
+                --i;
+
+                memory_l_step += 1;
+                if (memory_l_step > memory_g_steps) {
+                    insert_string_memory(buffer[i].str);
+                }
+            }
         }
     }
 
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
