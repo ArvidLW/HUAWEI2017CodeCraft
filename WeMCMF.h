@@ -22,6 +22,14 @@
  *
  * 每次spfa在以前基础上计算
  *
+ * 删除节点所在服务器，也即节点由供给变成需要了，在残余图中补充他所需要的就行
+ *
+ * 增加节点的服务器，也就是服务器流量流向服务器问题
+ * 若服务器距离为负则花费减少加上其服务器费用为负则花费减少，否则花费增加
+ * 建立另一超源，由新服务器组，流向原来的服务器
+ *
+ * 在增加时，只能利用残余图信息利用不了距离信息
+ *
  * $Id: WeMCMF.h,v 0.1 2017/03/26 00:30:35 lw Exp $
  *
  */
@@ -34,29 +42,223 @@ struct WeMCMF {
 
     double mCost[MAXNODE];
     int pre[MAXNODE];
+
     std::bitset<MAXNODE> isInQue;
     std::deque<Arc*> que;
+    std::deque<int> sRoute;//在寻找时运和
+    std::deque<int> fRoute;
     double minCost;
     double sumFlow;//use for check
     int s;//super source
     int t;//super sink
+    int sa;//super add source
+    char result[MAX_OUT_CHAR_NUM];
 
-    void addSource(std::vector<int> &server);
+    void addSource(int superId,std::vector<int> &server);
     void addSink();
     bool spfa();
     void mcmf();
-    WeMCMF(std::vector<int> &server):minCost{0},sumFlow{0},s{1000},t{1001} {
+    void addServer(std::vector<int> &server);
+    bool addSpfa();
+    void delServer(std::vector<int> &server);
+    void delSpfa();
+    void freeSa();
+    char* getRoute();
+    void deepSearch();
+    bool DFS(Arc *p);
+    WeMCMF(std::vector<int> &server):minCost{0},sumFlow{0},s{1000},t{1001},sa{1002} {
 
-        addSource(server);
+        addSource(s,server);
         addSink();
     }
 };
+//void WeMCMF::freeSa() {
+//    if(Graph::netNode[sa]){
+//        Arc *p=Graph::netNode[sa]->arc;
+//        Arc *q;
+//        while(p!= nullptr){
+//            q=p->next;
+//            free(p);
+//            p=q;
+//        }
+//    }
+//    free(Graph::netNode[sa]);
+//}
+char * WeMCMF::getRoute() {
+    //双向队列模拟一个栈，输出则从头即可
+    Arc *p=Graph::netNode[s]->arc;
+    //sRoute.push_back(s);
+    int routeArr[MAXNODE];
+    int offset{0};
+    int pathNum=0;
+    char re[MAX_OUT_CHAR_NUM];
+    while(p!= nullptr&&DFS(p)){
+        //printf(splitLine);
+        //printf("times: %d\n",++i);
+        sRoute.clear();
+        int n=fRoute.size();
+        if(n==0){
+            p=p->next;
+            continue;
+        }
+
+        memset(routeArr,-1,sizeof(routeArr));
+        for(int i=0;i<n;++i){
+            routeArr[i]=fRoute.front();
+            //printf("%d ,",fRoute.front() );
+            fRoute.pop_front();
+        }
+        double minFTmp=INF;
+        //查看通过反向边最小流
+        for(int i=0;i<n-1;++i){
+            if(minFTmp> Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity){
+                minFTmp=Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity;
+            }
+        }
+        //减去
+        for(int i=0;i<n-1;++i){
+            Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity=Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity - minFTmp;
+        }
+        //倒数第二位上记录消费节点
+        routeArr[n]=Graph::netNode[routeArr[n-1]]->consumerId;
+        //最后一位上记录流量
+        if(minFTmp>Graph::netNode[routeArr[n-1]]->require){
+            //printf("consuemer: %.f\n",Graph::netNode[routeArr[n-1]]->require);
+            minFTmp=Graph::netNode[routeArr[n-1]]->require;
+        }
+        routeArr[n+1]=minFTmp;
+
+        //printf(splitLine);
+        //printf("route:\n");
+        for(int i=0;i<n+2;++i){
+            offset+=sprintf(re+offset,"%d ",routeArr[i]);
+            //printf("%d , ",routeArr[i]);
+        }
+        re[offset-1]='\n';
+        ++pathNum;
+        //offset+=sprintf(result+offset,"\n");
+        //printf("\n");
+        fRoute.clear();
+        p=p->next;
+        //printf("p->next:%d, rcap:%.f\n",p->next->node1,p->rCapacity);
+    }
+    char rNumLine[10];
+    sprintf(rNumLine,"%d\n\n",pathNum);
+    sprintf(result,"%s%s",rNumLine,re);
+    printf("%s",result);
+
+}
+bool WeMCMF::DFS(Arc *p) {
+    //printf("0-enter DFS \n");
+    bool flag{false};
+    sRoute.push_back(p->node1);
+    if(Graph::gNet[p->node1][p->node0]->rCapacity>0 && Graph::netNode[p->node1]->isWithConsumer){
+        //printf("1----enter DFS \n");
+        fRoute.assign(sRoute.begin(),sRoute.end());
+        //printf("2----enter DFS \n");
+        return true;
+    } else{
+        //printf("3----enter DFS \n");
+        Arc *q=Graph::netNode[p->node1]->arc;
+        while(q!= nullptr){
+           // printf("4----enter DFS, %.f \n",q->rCapacity);
+            if(Graph::gNet[q->node1][q->node0]->rCapacity>0){
+                flag=DFS(q);
+                sRoute.pop_back();
+            }
+            q=q->next;
+        }
+        return flag;
+    }
+}
+
+void WeMCMF::addServer(std::vector<int> &server) {
+    //freeSa();
+    //第一次建sa
+    addSource(sa,server);
+    //Arc *p=Graph::netNode[sa]->arc;
+    isInQue.set(sa);
+    que.push_back(Graph::netNode[sa]->arc);
+    while(spfa()){
+
+    }
+
+
+    //建立超源，在原来超源的基础上增加连向服务器节点的边即可
+//    for (int i = 0; i < server.size(); ++i) {
+//        Arc *p=(Arc *)calloc(1,sizeof(Arc));
+//        p->node0=s;
+//        p->node1=server[i];
+//        p->capacity=INF;
+//        p->mCapacity=INF;
+//        p->cost=0;
+//        q->next=p;
+//        q=q->next;
+//        Graph::gNet[p->node0][p->node1]=p;
+//
+//        que.push_back(Graph::netNode[server[i] ]->arc);
+//        isInQue.set(server[i] );
+//    }
+    //更新mCost和pre,把mCost和pre置为
+
+}
+bool WeMCMF::addSpfa() {
+    Arc *p,*q;
+    int dir=1;
+    //int sum=mCost[s];
+    while(!que.empty()){
+        p=que.front();
+        que.pop_front();
+
+        //printf("-------------------------------enter spfa while pullptr %d->%d :%.f,  %.f,  %.f, %d\n",p->node0,p->node1,p->cost,mCost[p->node0],mCost[p->node1], dir);
+
+        int node0=p->node0;
+        while(p!= nullptr){
+            if(p->rCapacity>0){
+                dir=-1;
+            }else{
+                dir=1;
+                if(p->mCapacity<=0){
+                    p=p->next;
+                    continue;
+                }
+            }
+            if(mCost[p->node1] > p->cost*dir+mCost[p->node0]){
+                //printf("enter spfa while pullptr %d->%d :%.f,  %.f,  %.f, %d\n",p->node0,p->node1,p->cost,mCost[p->node0],mCost[p->node1], dir);
+
+                mCost[p->node1] = p->cost*dir+mCost[p->node0];
+                if(!isInQue[p->node1]){
+                    isInQue.set(p->node1);
+                    if(Graph::netNode[p->node1]->arc!= nullptr){
+                        if(!que.empty()){
+                            //stl
+                            if(mCost[p->node1]<mCost[que.front()->node0]){
+                                que.push_front(Graph::netNode[p->node1]->arc);
+                            }
+                            else{
+                                que.push_back(Graph::netNode[p->node1]->arc);
+                            }
+                        }
+                        else{
+                            que.push_back(Graph::netNode[p->node1]->arc);
+                        }
+                    }
+                }
+                //sum=sum+mCost[p->node1];
+                pre[p->node1]=p->node0;
+            }
+            p=p->next;
+        }
+        isInQue.reset(node0);
+    }
+    return pre[t]!=-1;
+}
 void WeMCMF::mcmf() {
     memset(mCost,0x70, sizeof(mCost));
     memset(pre,-1,sizeof(pre));
     double minFlow;
     int minFlowLoc;
-    int u=s;
+    //int u=s;
     mCost[s]=0;
     pre[s]=s;
     isInQue.set(s);
@@ -122,44 +324,23 @@ void WeMCMF::mcmf() {
                     Arc *q=Graph::netNode[p->node1]->arc;
                     while(q!= nullptr){
                         if(q->node1!=p->node0 && pre[q->node1]!=-1 && !isInQue[q->node1]){
-//                            if(!que.empty()){
-//                                if(mCost[q->node1]<mCost[que.front()->node0]){
-//                                    que.push_front(Graph::netNode[q->node1]->arc);
-//                                } else{
-//                                    que.push_back(Graph::netNode[q->node1]->arc);
-//                                }
-//                            } else{
-//                                que.push_back(Graph::netNode[q->node1]->arc);
-//                            }
+                            if(!que.empty()){
+                                if(mCost[q->node1]<mCost[que.front()->node0]){
+                                    que.push_front(Graph::netNode[q->node1]->arc);
+                                } else{
+                                    que.push_back(Graph::netNode[q->node1]->arc);
+                                }
+                            } else{
+                                que.push_back(Graph::netNode[q->node1]->arc);
+                            }
 
-                            que.push_back(Graph::netNode[q->node1]->arc);
+                            //que.push_back(Graph::netNode[q->node1]->arc);
                             isInQue.set(q->node1);
-//                            printf("enter min\n");
-//                            if(q->rCapacity>0){
-//                                //printf("enter---------------,q->node1=%d\n",q->node1);
-//                                if(CTmp > mCost[q->node1]-q->cost){
-//                                    CTmp = mCost[q->node1]-q->cost;
-//                                    CLoc = q->node1;
-//                                }
-//                            }
-//                            else if(q->mCapacity>0){
-//                                //printf("enter++++++++++++++++++++,q->node1=%d\n",q->node1);
-//                                if(CTmp > mCost[q->node1]+q->cost){
-//                                    CTmp = mCost[q->node1]+q->cost;
-//                                    CLoc = q->node1;
-//                                }
-//                            }
+//
                             //printf("q->node1: %d\n",q->node1);
                         }
                         q=q->next;
                     }
-//                    if(CLoc!=-1){
-//                        que.push_back(Graph::netNode[CLoc]->arc);
-//                        isInQue.set(CLoc);
-//                        CLoc=-1;
-//                        CTmp=INF;
-//                    }
-
                 }
                 p=p->next;
             }
@@ -194,133 +375,6 @@ void WeMCMF::mcmf() {
             CLoc=-1;
             CTmp=INF;
         }
-
-
-
-
-
-//        //int cc=0;
-//        std::queue<int> vQue;
-//        vQue.push(minFlowLoc);
-//        int vt;
-//        while(!vQue.empty()){
-//            vt=vQue.front();
-//            vQue.pop();
-//            Arc *p=Graph::netNode[vt]->arc;
-//            while(p!= nullptr){
-//                if(pre[p->node1] == vt){
-//                    pre[p->node1] = -1;
-//                    mCost[p->node1] = INF;
-//                    vQue.push(p->node1);
-//                    //++cc;
-//                    Arc *q=Graph::netNode[p->node1]->arc;
-//                    while(q!= nullptr){
-//                        if(q->node1!=p->node0 && pre[q->node1]!=-1 && !isInQue[q->node1]){
-////                            if(!que.empty()){
-////                                if(mCost[q->node1]<mCost[que.front()->node0]){
-////                                    que.push_front(Graph::netNode[q->node1]->arc);
-////                                } else{
-////                                    que.push_back(Graph::netNode[q->node1]->arc);
-////                                }
-////                            } else{
-////                                que.push_back(Graph::netNode[q->node1]->arc);
-////                            }
-//                            que.push_back(Graph::netNode[q->node1]->arc);
-//                            isInQue.set(q->node1);
-//                            //printf("q->node1: %d\n",q->node1);
-//                        }
-//                        q=q->next;
-//                    }
-//
-//                }
-//                p=p->next;
-//            }
-//        }
-//
-//        for(int i=0;i<Graph::consumerCount;++i){
-//            Arc *p=Graph::netNode[Graph::consumerNode[i] ]->arc;
-//            if(p->mCapacity>0 && !isInQue[p->node0]){
-//
-//                if(!que.empty()){
-//                    if(mCost[p->node0]<mCost[que.front()->node0]){
-//                        que.push_front(Graph::netNode[p->node0]->arc);
-//                     } else{
-//                            que.push_back(Graph::netNode[p->node0]->arc);
-//                     }
-//                } else{
-//                    que.push_back(Graph::netNode[p->node0]->arc);
-//                }
-//                que.push_back(p);
-//                isInQue.set(p->node0);
-//            }
-//        }
-        //(4) best
-//        for(int i=0;i<Graph::nodeCount;++i){
-//
-//            if(pre[i]!=-1 && !isInQue[i]){
-//                que.push_back(Graph::netNode[i]->arc);
-//                isInQue.set(i);
-//                //++cc;
-//            }
-//        }
-
-
-//        //(3) 把距离变为很大的节点的相临的点推入，其节点前驱不为-1，思想是没有错的
-//        int kk=0;
-////
-//        for(int i=0;i<Graph::nodeCount;++i){
-//            if(pre[i]==-1){
-//                Arc *p=Graph::netNode[i]->arc;
-//
-//                while (p){
-//
-//                    if(Graph::netNode[p->node1]->arc!= nullptr ){
-//                        if(pre[p->node1]!=-1 && !isInQue[p->node1]){
-//                            que.push_back(Graph::netNode[p->node1]->arc);
-//                            isInQue.set(p->node1);
-//                            ++kk;
-//                        }
-//
-//                    }
-//
-//                    p=p->next;
-//                }
-//
-//            }
-//        }
-//        printf("cc = %d, kk=%d\n",cc,kk);
-        //(2)
-//        for(int i=0;i<Graph::nodeCount;++i){
-//            if(pre[i]!=-1 && !isInQue[i]){
-//                Arc *p=Graph::netNode[i]->arc;
-//                while(p){
-//                    if(pre[p->node1]!=p->node0){
-//                        que.push_back(Graph::netNode[i]->arc);
-//                        isInQue.set(i);
-//                        break;
-//                    }
-//                    p=p->next;
-//                }
-//            }
-//        }
-        //(1)
-        //push in
-        //u=minFlowLoc;
-//        for(int i=0;i<Graph::nodeCount;++i){
-//            if(pre[i]!=-1 && !isInQue[i]){
-//                if(!que.empty()){
-//                    if(mCost[i]<mCost[que.front()->node0]){
-//                        que.push_front(Graph::netNode[i]->arc);
-//                    } else{
-//                        que.push_back(Graph::netNode[i]->arc);
-//                    }
-//                } else{
-//                    que.push_back(Graph::netNode[i]->arc);
-//                }
-//
-//                isInQue.set(i);
-//            }
-//        }
 
     }
     //当流量充满时一些点不能经过，作如下处理，将该点后面受影响的值改为INF
@@ -389,23 +443,25 @@ bool WeMCMF::spfa() {
     }
     return pre[t]!=-1;
 }
-void WeMCMF::addSource(std::vector<int> &server) {
-    Graph::netNode[s]=(Node *)calloc(1, sizeof(Node));//superSource,outDegree=server.size();
+void WeMCMF::addSource(int superId,std::vector<int> &server) {
+    Graph::netNode[superId]=(Node *)calloc(1, sizeof(Node));//superSource,outDegree=server.size();
     Arc *q;
     Arc tmp;
     q=&tmp;
     for (int i = 0; i < server.size(); ++i) {
         Arc *p=(Arc *)calloc(1,sizeof(Arc));
-        p->node0=s;
+        p->node0=superId;
         p->node1=server[i];
         p->capacity=INF;
         p->mCapacity=INF;
+        p->rCapacity=INF;
         p->cost=0;
         q->next=p;
         q=q->next;
         Graph::gNet[p->node0][p->node1]=p;
+        Graph::gNet[p->node1][p->node0]=p;
     }
-    Graph::netNode[s]->arc=tmp.next;
+    Graph::netNode[superId]->arc=tmp.next;
 
 }
 void WeMCMF::addSink() {
@@ -419,11 +475,14 @@ void WeMCMF::addSink() {
         p->node1=t;
         p->capacity=Graph::netNode[Graph::consumerNode[i]]->require;
         p->mCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
+
+        //p->rCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
         p->cost=0;
 
         p->next=Graph::netNode[Graph::consumerNode[i]]->arc;
         Graph::netNode[Graph::consumerNode[i]]->arc=p;
         Graph::gNet[p->node0][p->node1]=p;
+        Graph::gNet[p->node1][p->node0]=p;
     }
 }
 

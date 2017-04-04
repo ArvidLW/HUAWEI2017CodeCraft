@@ -18,7 +18,7 @@
 #define CDN_COMMON_H
 
 
-#define MAXNODE 1002                //最大节点数
+#define MAXNODE 1003                //最大节点数
 #define MAXCONSUMER 502             //最大消费节点数
 #define MAXVALUE 1000.0             //设定的最大值
 #define MIN_VALUE 0.011              //用来界定选择服务器,serverID
