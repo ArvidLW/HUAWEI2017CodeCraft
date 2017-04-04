@@ -36,36 +36,26 @@ private:
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
 
-    float ga_elitism_rate = 0.25f; // 精英比率 0.10f
+    float ga_elitism_rate = 0.10f; // 精英比率 0.10f
     int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
     double decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
-    double decay_m_rate = 0.99;
+    double decay_m_rate = 0.90;
     int mutate_step = 1; // 多少步后不同阶层个体突变情况的变化 10
-    float ga_mutation_rate  = 0.45f; // 变异率 0.25f
+    float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
-    int mutation_step_ox = 50; // 交替进行或且
-    bool b_mutation_step = false;
-
-    int init_mutation_nums = 1; // 初始基因点位可变异数目
-    int min_mutation_nums = 1;
-    int decay_mutation_ga = 1;
-
-    // 基因片段交换相关
-    bool b_mutation_spos = false;
-    int step_mutation_spos = 200;
 
     // 突变与精英率每次衰减率值
-    float decay_rate = 0.05;
+    float decay_rate = 0.10f;
 
     // 全局步骤
     int ga_step;
 
     // 等级演化初始分布
     // 正向递减high=30--->high_line=10;middle=70+++>middle_line=90.所以中间模糊基因段变异概率会慢慢变大
-    int high = 20;
-    int middle = 80;
+    int high = 30;
+    int middle = 70;
     int high_line = 10;
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
@@ -347,19 +337,19 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 100;
-        }
-        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 80;
-        }
-        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
             ga_size = 50;
         }
+        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
+            ga_size = 30;
+        }
+        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
+            ga_size = 20;
+        }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 25;
+            ga_size = 10;
         }
         else {
-            ga_size = 15;
+            ga_size = 8;
         }
 
         // 同等级基因大小的群体的衰减率
@@ -577,46 +567,36 @@ public:
         int choose;
         int ipos;
 
-        // 每运行步数衰减变异数目
-        if (ga_step % decay_mutation_ga == (decay_mutation_ga - 1))
-        {
-            if (init_mutation_nums > min_mutation_nums) {
-                init_mutation_nums -= 1;
-            }
-        }
-
         // 重复变异几次，提高成功率，且变异数会慢慢变小
-        for (int i = 0; i < init_mutation_nums; ++i) {
-            choose = mutate_design();
-            if (choose == 1) {
-                if (size_Id_server != 0) {
-                    ipos = rand() % size_Id_server;
-                }
-                else {
-                    ipos = 0;
-
-                    printf("May be something wrong!\n");
-                }
-            }
-            else if (choose == 2) {
-                if (size_Candidate_server != 0) {
-                    ipos = size_Id_server + rand() % size_Candidate_server;
-                }
-                else {
-                    ipos = rand() % size_Id_server;
-                }
+        choose = mutate_design();
+        if (choose == 1) {
+            if (size_Id_server != 0) {
+                ipos = rand() % size_Id_server;
             }
             else {
-                if (size_Possible_server != 0) {
-                    ipos = size_Id_server + size_Candidate_server + rand() % size_Possible_server;
-                }
-                else {
-                    ipos = rand() % (size_Id_server + size_Candidate_server);
-                }
-            }
+                ipos = 0;
 
-            (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
+                printf("May be something wrong!\n");
+            }
         }
+        else if (choose == 2) {
+            if (size_Candidate_server != 0) {
+                ipos = size_Id_server + rand() % size_Candidate_server;
+            }
+            else {
+                ipos = rand() % size_Id_server;
+            }
+        }
+        else {
+            if (size_Possible_server != 0) {
+                ipos = size_Id_server + size_Candidate_server + rand() % size_Possible_server;
+            }
+            else {
+                ipos = rand() % (size_Id_server + size_Candidate_server);
+            }
+        }
+
+        (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
     }
 
     // ----已测试----
@@ -644,61 +624,11 @@ public:
             i1 = rand() % ga_size;
             i2 = rand() % ga_size;
 
-            // 基因交换的部分应该是在模糊基因区域
-            if (size_Candidate_server > 1 && b_mutation_spos) {
-                if (ga_step % step_mutation_spos == (step_mutation_spos - 2)) {
-                    b_mutation_spos = false;
-                }
-
-                spos = size_Id_server + rand() % size_Candidate_server;
-
-                tmp_str = population[i1].str.substr(0, spos) +
-                                population[i2].str.substr(spos, size_Id_server + size_Candidate_server - spos) +
-                                population[i1].str.substr(size_Id_server + size_Candidate_server, size_Possible_server);
-            }
-            else {
-                // ----已测试----
-                // 基因交换(拼接)
-
-                if (ga_step % step_mutation_spos == (step_mutation_spos - 1)) {
-                    b_mutation_spos = true;
-                }
-
-                spos = rand() % ga_target_size;
-                tmp_str = population[i1].str.substr(0, spos) +
-                                population[i2].str.substr(spos, ga_target_size - spos);
-            }
-
             // ----已测试----
             // 基因交换(拼接)
             spos = rand() % ga_target_size;
             buffer[i].str = population[i1].str.substr(0, spos) +
                             population[i2].str.substr(spos, ga_target_size - spos);
-
-            // 基因交换操作赋值
-            if (ga_step % mutation_step_ox == (mutation_step_ox -1)) {
-                b_mutation_step = true;
-            }
-            if (b_mutation_step) {
-                for (int j = 0; j < buffer[i].str.size(); ++j) {
-                    if (tmp_str[j] == '1' || buffer[i].str[j] == '1') {
-                        buffer[i].str[j] = '1';
-                    }
-                    else {
-                        buffer[i].str[j] = '0';
-                    }
-                }
-            }
-            else {
-                for (int j = 0; j < buffer[i].str.size(); ++j) {
-                    if (tmp_str[j] == buffer[i].str[j] && tmp_str[j] == '1') {
-                        buffer[i].str[j] = '1';
-                    }
-                    else {
-                        buffer[i].str[j] = '0';
-                    }
-                }
-            }
             buffer[i].fitness = INF;
 
             // 基因位变异
@@ -835,6 +765,8 @@ public:
         buffer = &pop_beta;
 
         int t0=clock();
+        int end_steps = 0;
+        double tmp_min_minicost=INF;
         for (int i=0; i<ga_max_iterate; i++) {
             ga_step = i;
 
@@ -844,17 +776,28 @@ public:
             // 精英率与变异率衰减
             decay(ga_step);
 
+            // 用于统计迭代minicost重复的次数
+            tmp_min_minicost = (*population)[0].fitness;
+
             // 计算适应度
             calc_fitness_server(*population, i);
 
             // 对个体进行排序
             sort_by_fitness(*population);
 
+            // 用于统计迭代minicost重复的次数
+            if ((*population)[0].fitness == tmp_min_minicost) {
+                end_steps += 1;
+            }
+            else {
+                end_steps = 0;
+            }
+
             // 输出最好的个体
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1)) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 200) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
