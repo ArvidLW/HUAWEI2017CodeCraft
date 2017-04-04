@@ -172,7 +172,6 @@ private :
         if(u == sink_p){
             minicost += cost * f;
             max_flow += f;
-
             Path temp;
             temp.nodes = pat;
             temp.flow = f;
@@ -288,17 +287,11 @@ public :
             }
             path.clear();
             deque<int> tmp;
-            double cal=0;
             while(search_path(source_p,INF,0,tmp))
             {
                 tmp.clear();
             }
-            for(Path pa:path)
-            {
-                cal+=pa.cost;
-            }
-            cout<<minicost<<":"<<cal<<endl;
-
+            path_num=path.size();
             int offset{0};
             offset+=sprintf(s+offset,"%d\n\n",path_num);
             //sprintf(s,"%d\n\n",path_num);
