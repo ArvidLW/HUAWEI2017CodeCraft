@@ -52,7 +52,7 @@ private:
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
-    int init_mutation_nums = 50; // 初始基因点位可变异数目
+    int init_mutation_nums = 10; // 初始基因点位可变异数目
     int min_mutation_nums = 2;
     int decay_mutation_ga = 1;
 
@@ -378,16 +378,16 @@ public:
             memory_size_g = 1600;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            memory_size_g = 2500;
+            memory_size_g = 1600;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            memory_size_g = 3600;
+            memory_size_g = 1600;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            memory_size_g = 2500;
+            memory_size_g = 800;
         }
         else {
-            memory_size_g = 1600;
+            memory_size_g = 800;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
@@ -735,7 +735,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
