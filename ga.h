@@ -35,14 +35,20 @@ private:
     double ga_init_bad_rate = 0.10f;
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10 (2)
+    int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
     double decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
     double decay_m_rate = 0.99;
-    int mutate_step = 1; // 多少步后不同阶层个体突变情况的变化 10 (3)
+    int mutate_step = 1; // 多少步后不同阶层个体突变情况的变化 10
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
+
+    int init_mutation_nums = 10; // 初始基因点位可变异数目
+    int min_mutation_nums = 1;
+    int decay_mutation_ga = 2;
+    bool b_mutation_spos = false;
+    int step_mutation_spos = 50;
 
     // 突变与精英率每次衰减率值
     float decay_rate = 0.05;
@@ -58,8 +64,10 @@ private:
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
     bool hm_flag = false;
-    int hm_line_high = 40;
-    int hm_line_middle = 60;
+    int hm_line_high = 35;
+    int hm_line_middle = 65;
+    int step_begin = 0;
+    int steps_stop = 5;
 
     // 保存本次迭代最优基因及其适应度
     std::string ga_s;
@@ -124,7 +132,13 @@ public:
             int middle=low + ((high-low)>>1);
 
             //计算此时的耗费
+            std::vector <int>().swap(find_line_bs);
             find_line_bs = to_serverID(bs_serverID, middle);
+
+            std::vector <int>().swap(ChooseServer::serverID);
+            ChooseServer::serverID = find_line_bs;
+
+            minicost_bs = INF;
             minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
 
             // 二维搜索
@@ -172,7 +186,13 @@ public:
             int middle=low + ((high-low)>>1);
 
             //计算此时的耗费
+            std::vector <int>().swap(find_line_bs);
             find_line_bs = to_serverID(bs_serverID, middle);
+
+            std::vector <int>().swap(ChooseServer::serverID);
+            ChooseServer::serverID = find_line_bs;
+
+            minicost_bs = INF;
             minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
 
             // 二维搜索
@@ -264,8 +284,9 @@ public:
         //
         //注意：第一条线找到的serverID可能出现minicost=INF的情况（暂时不管）
         //
-        double minicost_tmp_two;
-        if (minicost_tmp_one < INF) {
+
+        double minicost_tmp_two = ga_run.run(Graph::nodeCount, Graph::arcCount, ChooseServer::serverID);
+        if (minicost_tmp_two < INF) {
             minicost_tmp_two = minicost_tmp_one;
         }
         else {
@@ -329,10 +350,10 @@ public:
             ga_size = 20;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 15;
+            ga_size = 10;
         }
         else {
-            ga_size = 10;
+            ga_size = 8;
         }
 
         // 同等级基因大小的群体的衰减率
@@ -429,11 +450,24 @@ public:
             citizen.str.erase();
 
             // 初始化个体基因
-            if (i == 0) {
+            if (i <= ceil(ga_size/8)) {
                 // 将最优个体基因加入种群
                 for (int j=0; j<ga_target_size; j++) {
                     citizen.str += std::to_string(1);
                 }
+
+                ga_s.clear();
+                ga_s = citizen.str;
+            }
+            else if (i > ceil(ga_size/8) && i <=ceil(ga_size/4)) {
+                // 将最优个体基因加入种群
+                for (int j=0; j<size_Id_server + size_Candidate_server; j++) {
+                    citizen.str += std::to_string(1);
+                }
+                for (int k = size_Id_server + size_Candidate_server; k < ga_target_size; ++k) {
+                    citizen.str += std::to_string(0);
+                }
+
                 ga_s.clear();
                 ga_s = citizen.str;
             }
@@ -534,36 +568,49 @@ public:
     // ----已测试----
     // 突变操作（服务器）
     void mutate_server(ga_struct &member) {
-        int choose = mutate_design();
+        int choose;
         int ipos;
-        if (choose == 1) {
-            if (size_Id_server != 0) {
-                ipos = rand() % size_Id_server;
-            }
-            else {
-                ipos = 0;
 
-                printf("May be something wrong!\n");
-            }
-        }
-        else if (choose == 2) {
-            if (size_Candidate_server != 0) {
-                ipos = size_Id_server + rand() % size_Candidate_server;
-            }
-            else {
-                ipos = rand() % size_Id_server;
-            }
-        }
-        else {
-            if (size_Possible_server != 0) {
-                ipos = size_Id_server + size_Candidate_server + rand() % size_Possible_server;
-            }
-            else {
-                ipos = rand() % (size_Id_server + size_Candidate_server);
+        // 每运行步数衰减变异数目
+        if (ga_step % decay_mutation_ga == (decay_mutation_ga - 1))
+        {
+            if (init_mutation_nums > 1) {
+                init_mutation_nums -= 1;
             }
         }
 
-        (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
+        // 重复变异几次，提高成功率，且变异数会慢慢变小
+        for (int i = 0; i < init_mutation_nums; ++i) {
+            choose = mutate_design();
+            if (choose == 1) {
+                if (size_Id_server != 0) {
+                    ipos = rand() % size_Id_server;
+                }
+                else {
+                    ipos = 0;
+
+                    printf("May be something wrong!\n");
+                }
+            }
+            else if (choose == 2) {
+                if (size_Candidate_server != 0) {
+                    ipos = size_Id_server + rand() % size_Candidate_server;
+                }
+                else {
+                    ipos = rand() % size_Id_server;
+                }
+            }
+            else {
+                if (size_Possible_server != 0) {
+                    ipos = size_Id_server + size_Candidate_server + rand() % size_Possible_server;
+                }
+                else {
+                    ipos = rand() % (size_Id_server + size_Candidate_server);
+                }
+            }
+
+            (member.str[ipos] == '1') ? (member.str[ipos] = '0') : (member.str[ipos] = '1');
+        }
     }
 
     // ----已测试----
@@ -589,10 +636,37 @@ public:
         for (int i=esize; i<ga_size; i++) {
             i1 = rand() % ga_size;
             i2 = rand() % ga_size;
-            spos = rand() % ga_target_size;
+
+//            // 基因交换的部分应该是在模糊基因区域
+//            if (size_Candidate_server > 1 && b_mutation_spos) {
+//                if (ga_step % step_mutation_spos == (step_mutation_spos - 2)) {
+//                    b_mutation_spos = false;
+//                }
+//
+//                spos = size_Id_server + rand() % size_Candidate_server;
+//
+//                buffer[i].str = population[i1].str.substr(0, spos) +
+//                                population[i2].str.substr(spos, size_Id_server + size_Candidate_server - spos) +
+//                                population[i1].str.substr(size_Id_server + size_Candidate_server, size_Possible_server);
+//                buffer[i].fitness = INF;
+//            }
+//            else {
+//                // ----已测试----
+//                // 基因交换(拼接)
+//
+//                if (ga_step % step_mutation_spos == (step_mutation_spos - 1)) {
+//                    b_mutation_spos = true;
+//                }
+//
+//                spos = rand() % ga_target_size;
+//                buffer[i].str = population[i1].str.substr(0, spos) +
+//                                population[i2].str.substr(spos, ga_target_size - spos);
+//                buffer[i].fitness = INF;
+//            }
 
             // ----已测试----
             // 基因交换(拼接)
+            spos = rand() % ga_target_size;
             buffer[i].str = population[i1].str.substr(0, spos) +
                             population[i2].str.substr(spos, ga_target_size - spos);
             buffer[i].fitness = INF;
@@ -605,7 +679,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
@@ -639,6 +713,7 @@ public:
     void population_change() {
         // 循环突变
         if (hm_flag) {
+            // 第二次调整，中间基因突变变大
             if (ga_step % mutate_step == (mutate_step - 1)) {
                 if (high < hm_line_high) {
                     high += 1;
@@ -648,11 +723,18 @@ public:
                 }
             }
 
+            // 未测试
             if (high == hm_line_high && middle == hm_line_middle) {
-                hm_flag = false;
+                step_begin += 1;
+
+                if (step_begin >= steps_stop) {
+                    hm_flag = false;
+                    step_begin = 0;
+                }
             }
         }
         else {
+            // 第一次调整，中间基因突变变大
             if (ga_step % mutate_step == (mutate_step - 1)) {
                 if (high > high_line) {
                     high -= 1;
@@ -662,8 +744,14 @@ public:
                 }
             }
 
+            // 未测试
             if (high == high_line && middle == middle_line) {
-                hm_flag = true;
+                step_begin += 1;
+                if (step_begin >= steps_stop) {
+                    hm_flag = true;
+
+                    step_begin = 0;
+                }
             }
         }
     }
