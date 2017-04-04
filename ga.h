@@ -375,16 +375,16 @@ public:
 
         // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
         if (ga_target_size < 100) {
-            memory_size_g = 1600;
+            memory_size_g = 3600;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            memory_size_g = 1000;
+            memory_size_g = 2500;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            memory_size_g = 800;
+            memory_size_g = 1600;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            memory_size_g = 600;
+            memory_size_g = 900;
         }
         else {
             memory_size_g = 400;
