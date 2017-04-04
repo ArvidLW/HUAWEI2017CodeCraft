@@ -173,7 +173,12 @@ struct ZKW {
                     minicost += cost * f;
                     max_flow += f;
 
-                    //path_num++;
+                    Path temp;
+                    temp.nodes = pat;
+                    temp.flow = f;
+                    temp.cost = cost;
+                    path.push_back(temp);
+                    path_num++;
                     return f;
                 }
                 double tmp = f;
@@ -239,7 +244,7 @@ struct ZKW {
                 {
                     do
                     {
-                        path.clear();
+                        //pat.clear();
                         mark.reset();
                     } while(aug(source_p, INF ,pat));
                 }
@@ -278,10 +283,16 @@ struct ZKW {
                 }
                 path.clear();
                 deque<int> tmp;
+                double cal=0;
                 while(search_path(source_p,INF,0,tmp))
                 {
                     tmp.clear();
                 }
+                for(Path pa:path)
+                {
+                    cal+=pa.cost;
+                }
+                cout<<minicost<<":"<<cal<<endl;
                 path_num=path.size();
 
                 int offset{0};
@@ -308,7 +319,10 @@ struct ZKW {
                 s[offset-1]='\0';
                 //std::cout<<s<<std::endl;
             }
+
+
             return s;
+
         }
 };
 
