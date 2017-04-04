@@ -41,7 +41,7 @@ private :
         path_num=0;
         node_num=num_n+2;
         link_num=num_e;
-        int edgesize=link_num*2+ChooseServer::serverID.size()+Graph::consumerCount;
+        int edgesize=link_num*2+serverLocation.size()+Graph::consumerCount;
         source_p =node_num-2;
         sink_p=node_num-1;
         all_demand=0;
@@ -63,7 +63,7 @@ private :
                 gr[i][j]=0;
             }
 
-        for(int i : ChooseServer::serverID)
+        for(int i : serverLocation)
         {
             add_edge(source_p,i,INF,0);//构造超源点和部署服务器节点的链路
         }
@@ -259,7 +259,7 @@ public :
         c_result();
         if(max_flow>=all_demand)
         {
-            minicost+=ChooseServer::serverID.size()*Graph::serverFee;
+            minicost+=serverLocation.size()*Graph::serverFee;
 //            std::cout<<"Cost:"<<minicost<<std::endl;
 //                if(minicost<=455){
 //                    printf("max_flow: %.f, all_demand= %.f \n",max_flow,all_demand );
@@ -273,7 +273,7 @@ public :
         if(max_flow<all_demand)
         {
             sprintf(s,"NA\n");
-            std::cout<<"NA\n"<<std::endl;
+            //std::cout<<"NA\n"<<std::endl;
             minicost=INF;
         }
         else{
