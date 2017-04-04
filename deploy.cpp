@@ -54,13 +54,13 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     //ChooseServer::serverID.assign(&tmp[0], &tmp[sizeof(tmp)/ sizeof(int)]);
     //memcpy(&ChooseServer::serverID[0],tmp, sizeof(tmp));
 
+    int t0=clock();
     OurGA ourGA = OurGA(filename);
     if (ourGA.bSolve) {
         ourGA.GaAlgorithmServer();
     }
     printf(splitLine);
-    //int t0=clock();
-
+    std::cout<<clock() - t0<<std::endl;
 }
 
 
