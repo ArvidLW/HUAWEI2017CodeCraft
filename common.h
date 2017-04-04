@@ -30,7 +30,7 @@
 #define INF 1.0e8                    //极大值
 //#define MAX_EDGE_NUM_G (2000*20+1500)
 #define MAX_NODE_NUM 1010           //最大节点数
-#define MAX_OUT_CHAR_NUM 200000     //用于设定输出时的字符数组长符
+#define MAX_OUT_CHAR_NUM 300000     //用于设定输出时的字符数组长符
 
 //#define WEDEBUG                     //用于打印基本信息与计算过程
 
@@ -52,11 +52,7 @@
 #include <unordered_map>
 #include <algorithm>
 
-//we
-#include "TimeCalculator.h" //0、计时器
 
-//全局变量
-TimeCalculator timer;       //计时器
 char splitLine[]="---------------------------------split line--------------------------------------\n";
 
 #include "Graph.h"          //1、建图
@@ -68,10 +64,11 @@ char splitLine[]="---------------------------------split line-------------------
 #include "zkw.h"            //4.2、zkw
 #include "WeMCMF.h"
 
-ZKW mc;
+WeMCMF mc;
 
 #include "WeGa.h"           //5、遗传
 #include "NeSearch.h"       //邻域搜索+禁忌
+#include "ga.h"
 
 
 

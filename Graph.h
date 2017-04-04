@@ -60,6 +60,7 @@ struct Graph {
     static int arcCount;
     static int consumerCount;
     static double serverFee;
+    static double allDemand;
 
     static Arc* gNet[MAXNODE][MAXNODE];
     /**邻接表头节点，可以查找服务节点对应消费节点*/
@@ -81,6 +82,7 @@ struct Graph {
 int Graph::nodeCount(0);
 int Graph::arcCount{0};
 int Graph::consumerCount{0};
+double Graph::allDemand{0};
 double Graph::serverFee{MAXVALUE};
 Arc* Graph::gNet[MAXNODE][MAXNODE]{nullptr};
 Node* Graph::netNode[MAXNODE]{nullptr};
@@ -179,6 +181,7 @@ void Graph::netNodeBuild(char **topo) {
             ++k;
         }
         netNode[tmp[1]]->require=(double)tmp[2];
+        allDemand=allDemand+netNode[tmp[1]]->require;
         netNode[tmp[1]]->isWithConsumer=true;
         netNode[tmp[1]]->consumerId=tmp[0];
 

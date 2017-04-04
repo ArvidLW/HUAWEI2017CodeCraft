@@ -87,7 +87,7 @@
 #define CDN_WEGA_H
 
 
-#define EVOLUTIONCOUNT 10  //进化次数
+#define EVOLUTIONCOUNT 100000  //进化次数
 struct Individual{
     double cost;
     std::bitset<MAXCONSUMER> gene;
