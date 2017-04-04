@@ -184,6 +184,7 @@ public:
     int binary_search_two(std::vector<int> bs_serverID, double one_minicost, int low, int high) {
         std::vector<int> find_line_bs;
         double minicost_bs = INF;
+        double min_cost = INF;
         int i = 0; // 用于提前终止二维搜索
         //如果无法找到解，那么默认为(high+low)/2
         int real_middle = -1;
@@ -208,7 +209,11 @@ public:
             }else {
                 // 比one_minicost大，可能包含太多最优解集，向左搜索
                 high=middle-1;
-                real_middle = high+1;
+
+                if (min_cost > minicost_bs) {
+                    min_cost = minicost_bs;
+                    real_middle = middle;
+                }
             }
 
             // 迭代次数统计
