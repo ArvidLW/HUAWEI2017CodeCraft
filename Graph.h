@@ -29,10 +29,12 @@ struct Arc{
     int node0;//begin
     int node1;//end
     double capacity;
+    double mCapacity;
     double cost;
     int id;
+    double rCapacity;//反向边容量
     Arc *next;
-    Arc(): node0{-1},node1{-1},capacity(0.0),cost(MAXVALUE),id{-1},next{nullptr} {}
+    Arc(): node0{-1},node1{-1},capacity{0},mCapacity{0},cost{MAXVALUE},id{-1},rCapacity{0},next{nullptr} {}
 };
 /**头节点
  * isWithConsumer  该节点是否连接消费节点
@@ -42,15 +44,23 @@ struct Arc{
 struct Node{
     bool isWithConsumer;
     int consumerId;
+    int id;
     double require;
+    double mCost;
+    Arc *mArc;
     Arc *arc;
-    Node():isWithConsumer{false},consumerId{-1},require{0.0},arc{nullptr} {}
+    Node():isWithConsumer{false},consumerId{-1},id{-1},require{0},mCost{INF},mArc{nullptr},arc{nullptr} {}
+
+    bool operator< (const Node &n)const{
+        return mCost<n.mCost;
+    }
 };
 struct Graph {
     static int nodeCount;
     static int arcCount;
     static int consumerCount;
     static double serverFee;
+    static double allDemand;
 
     static Arc* gNet[MAXNODE][MAXNODE];
     /**邻接表头节点，可以查找服务节点对应消费节点*/
@@ -72,6 +82,7 @@ struct Graph {
 int Graph::nodeCount(0);
 int Graph::arcCount{0};
 int Graph::consumerCount{0};
+double Graph::allDemand{0};
 double Graph::serverFee{MAXVALUE};
 Arc* Graph::gNet[MAXNODE][MAXNODE]{nullptr};
 Node* Graph::netNode[MAXNODE]{nullptr};
@@ -126,10 +137,11 @@ void Graph::gNetBuild(char * topo[]) {
         }
         Arc *p=(Arc *)calloc(1,sizeof(Arc));
         p->capacity=(double)tmp[2];
+        p->mCapacity=(double)tmp[2];
         p->cost=(double)tmp[3];
-        gNet[tmp[0] ][tmp[1] ]=p;
+        //gNet[tmp[0] ][tmp[1] ]=p;
         //赋值另一半
-        gNet[tmp[1] ][tmp[0] ]=p;
+        //gNet[tmp[1] ][tmp[0] ]=p;
 
         //build twice of edge,and use the matrix edge p
         /**adjoin table,head join*/
@@ -137,6 +149,7 @@ void Graph::gNetBuild(char * topo[]) {
         p->node1=tmp[1];
         p->next=netNode[tmp[0] ]->arc;
         netNode[tmp[0]]->arc=p;
+        //netNode[tmp[0]]->mArc=p;
 
 
         Arc *q=(Arc *)calloc(1,sizeof(Arc));
@@ -146,11 +159,16 @@ void Graph::gNetBuild(char * topo[]) {
         /**adjoin table,head join*/
         q->next = netNode[tmp[1]]->arc;
         netNode[tmp[1]]->arc=q;
+        //netNode[tmp[1]]->mArc=q;
+        gNet[tmp[0] ][tmp[1] ]=p;
+        gNet[tmp[1] ][tmp[0] ]=q;
+
     }
 }
 void Graph::netNodeBuild(char **topo) {
     for(int i=0;i<nodeCount;++i){
         netNode[i]=(Node *)calloc(1,sizeof(Node));
+        netNode[i]->id=i;
     }
     char *r;
     for(int i=5+arcCount; i<5+arcCount+consumerCount;++i){
@@ -163,6 +181,7 @@ void Graph::netNodeBuild(char **topo) {
             ++k;
         }
         netNode[tmp[1]]->require=(double)tmp[2];
+        allDemand=allDemand+netNode[tmp[1]]->require;
         netNode[tmp[1]]->isWithConsumer=true;
         netNode[tmp[1]]->consumerId=tmp[0];
 
