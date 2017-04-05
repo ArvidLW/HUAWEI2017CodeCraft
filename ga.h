@@ -98,9 +98,9 @@ private:
     int size_Possible_server;
 
     // 求解最小费用流
-    //ZKW ga_run;
+    ZKW ga_run;
     //MCMF ga_run;
-    WeMCMF ga_run;
+    //WeMCMF ga_run;
 
     // 遗传算法结构体，包括适应与最优解
     struct ga_struct {
@@ -426,7 +426,7 @@ public:
             bSolve = false;
         }
         else {
-            //write_result(ga_run.getRoute(), ga_filename);
+            write_result(ga_run.getRoute(), ga_filename);
             bSolve = true;
         }
     }
@@ -742,7 +742,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
@@ -761,13 +761,9 @@ public:
         }
 
         if (!ChooseServer::serverID.empty()) {
-            //WeMCMF1 ga_run1;
-
             if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) < INF) {
                 write_result(ga_run.getRoute(),ga_filename);
             }
-
-            //ga_run.clearData(ga_run1.s);
         }
         else {
             std::cout<<"Code is Error Error, Please check it!\n"<<std::endl;

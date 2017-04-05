@@ -49,6 +49,7 @@ struct WeFastMCMF {
     std::deque<Arc*> que;
     std::deque<int> sRoute;//在寻找时运和
     std::deque<int> fRoute;
+    std::vector<int> *lserver;
     double minCost;
     double sumFlow;//use for check
     int s;//super source
@@ -78,18 +79,6 @@ struct WeFastMCMF {
         addSink();
     }
 };
-//void WeFastMCMF::freeSa() {
-//    if(Graph::netNode[sa]){
-//        Arc *p=Graph::netNode[sa]->arc;
-//        Arc *q;
-//        while(p!= nullptr){
-//            q=p->next;
-//            free(p);
-//            p=q;
-//        }
-//    }
-//    free(Graph::netNode[sa]);
-//}
 void WeFastMCMF::printVector(std::vector<int> &serverLocation) {
     printf(splitLine);
     for(int i=0;i<serverLocation.size();++i){
@@ -132,24 +121,40 @@ void WeFastMCMF::clearData() {
     }
     Graph::netNode[s]= nullptr;
 }
+
 char * WeFastMCMF::getRoute() {
     //双向队列模拟一个栈，输出则从头即可
     Arc *p=Graph::netNode[s]->arc;
-    //sRoute.push_back(s);
+    sRoute.push_back(s);
     int routeArr[MAXNODE];
     int offset{0};
     int pathNum=0;
     char re[MAX_OUT_CHAR_NUM];
+    //addSink_Base0();
+    Arc *se=Graph::netNode[s]->arc;
+    while(se!= nullptr){
+        se->rCapacity=se->capacity-se->mCapacity;
+        se=se->next;
+    }
+    for (int i = 0; i < Graph::consumerCount; ++i) {
+
+        Graph::gNet[Graph::consumerNode[i]][t]->rCapacity=Graph::gNet[Graph::consumerNode[i]][t]->capacity - Graph::gNet[Graph::consumerNode[i]][t]->mCapacity;
+
+    }
     while(p!= nullptr&&DFS(p)){
+
+//        if(!DFS(p)){
+//            p=p->next;
+//        }
         //printf(splitLine);
         //printf("times: %d\n",++i);
         sRoute.clear();
+        sRoute.push_back(s);
         int n=fRoute.size();
         if(n==0){
             p=p->next;
             continue;
         }
-
         memset(routeArr,-1,sizeof(routeArr));
         for(int i=0;i<n;++i){
             routeArr[i]=fRoute.front();
@@ -163,23 +168,22 @@ char * WeFastMCMF::getRoute() {
                 minFTmp=Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity;
             }
         }
-        //if(minFTmp>Graph::netNode[])
         //减去
+        //printf("pmCap: %.f , %.f , %.f\n",p->mCapacity,p->rCapacity,Graph::gNet[p->node1][p->node0]->rCapacity);
         for(int i=0;i<n-1;++i){
             Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity=Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity - minFTmp;
         }
         //倒数第二位上记录消费节点
-        routeArr[n]=Graph::netNode[routeArr[n-1]]->consumerId;
+        routeArr[n-1]=Graph::netNode[routeArr[n-2]]->consumerId;
         //最后一位上记录流量
-        if(minFTmp>Graph::netNode[routeArr[n-1]]->require){
+        if(minFTmp>Graph::netNode[routeArr[n-2]]->require){
             //printf("consuemer: %.f\n",Graph::netNode[routeArr[n-1]]->require);
-            minFTmp=Graph::netNode[routeArr[n-1]]->require;
+            minFTmp=Graph::netNode[routeArr[n-2]]->require;
         }
-        routeArr[n+1]=minFTmp;
-
+        routeArr[n]=minFTmp;
         //printf(splitLine);
         //printf("route:\n");
-        for(int i=0;i<n+2;++i){
+        for(int i=1;i<n+1;++i){
             offset+=sprintf(re+offset,"%d ",routeArr[i]);
             //printf("%d , ",routeArr[i]);
         }
@@ -188,22 +192,34 @@ char * WeFastMCMF::getRoute() {
         //offset+=sprintf(result+offset,"\n");
         //printf("\n");
         fRoute.clear();
-        p=p->next;
+        //如果流量没用完则继续找，否则换下一边
+        //p->mCapacity=p->mCapacity+minFTmp;
+        //printf("pmCap: %.f , %.f , %.f\n",p->mCapacity,p->rCapacity,Graph::gNet[p->node1][p->node0]->rCapacity);
+        //printf("cap: %.f , %.f\n",p->rCapacity,p->mCapacity);
+        if(p->rCapacity<=0){
+            p=p->next;
+        }
         //printf("p->next:%d, rcap:%.f\n",p->next->node1,p->rCapacity);
     }
+    for (int i = 0; i < Graph::consumerCount; ++i) {
+
+        Graph::gNet[Graph::consumerNode[i]][t]->mCapacity=Graph::gNet[Graph::consumerNode[i]][t]->capacity;
+
+    }
+    re[offset-1]='\0';
     char rNumLine[10];
     sprintf(rNumLine,"%d\n\n",pathNum);
     sprintf(result,"%s%s",rNumLine,re);
     //printf("%s",result);
     //printf("minCost: %.f\n",minCost);
     return result;
-
 }
 bool WeFastMCMF::DFS(Arc *p) {
     //printf("0-enter DFS \n");
     bool flag{false};
     sRoute.push_back(p->node1);
-    if(Graph::gNet[p->node1][p->node0]->rCapacity>0 && Graph::netNode[p->node1]->mRequire>0){
+
+    if(Graph::gNet[p->node1][p->node0]->rCapacity>0 && p->node1==t){
         //printf("1----enter DFS \n");
         fRoute.assign(sRoute.begin(),sRoute.end());
         //printf("2----enter DFS \n");
@@ -222,6 +238,7 @@ bool WeFastMCMF::DFS(Arc *p) {
         return flag;
     }
 }
+
 
 void WeFastMCMF::addServer(std::vector<int> &server) {
     //freeSa();
@@ -306,6 +323,7 @@ bool WeFastMCMF::addSpfa() {
 }
 
 double WeFastMCMF::run(int num1,int num2,std::vector<int> &serverLocation) {
+    lserver=&serverLocation;
     //printVector(serverLocation);
     clearData();
     addSource(s,serverLocation);
@@ -541,7 +559,7 @@ void WeFastMCMF::addSource(int superId,std::vector<int> &server) {
         p->node1=server[i];
         p->capacity=INF;
         p->mCapacity=INF;
-        p->rCapacity=INF;
+        p->rCapacity=0;
         p->cost=0;
         q->next=p;
         q=q->next;
@@ -553,11 +571,6 @@ void WeFastMCMF::addSource(int superId,std::vector<int> &server) {
 }
 void WeFastMCMF::addSink() {
     Graph::netNode[t]=(Node *)calloc(1, sizeof(Node));//superSink,outDegree=0;
-//    Arc *q;
-//    Arc tmp;
-//    q=&tmp;
-
-//    Graph::netNode[t]->arc=tmp.next;
     for(int i=0;i<Graph::consumerCount;++i){
         Arc *p=(Arc *)calloc(1,sizeof(Arc));
         p->node0=Graph::consumerNode[i];
@@ -565,15 +578,14 @@ void WeFastMCMF::addSink() {
         p->capacity=Graph::netNode[Graph::consumerNode[i]]->require;
         p->mCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
 
-        //p->rCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
+        p->rCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
         p->cost=0;
 
         p->next=Graph::netNode[Graph::consumerNode[i]]->arc;
         Graph::netNode[Graph::consumerNode[i]]->arc=p;
         Graph::gNet[p->node0][p->node1]=p;
         Graph::gNet[p->node1][p->node0]=p;
+        //printf("p.rcap:%.f   ",Graph::gNet[p->node0][p->node1]->rCapacity);
     }
 }
-
-
 #endif //CDN_WEFASTMCMF_H

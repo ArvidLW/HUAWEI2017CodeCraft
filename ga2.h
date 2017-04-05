@@ -414,15 +414,15 @@ public:
         std::cout<<"GA length:"<<ga_target_size<<std::endl;
 
         //ZKW ga_run;
-        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) >= INF) {
-            printf("No LP Solve!\n");
-
-            bSolve = false;
-        }
-        else {
-            write_result(ga_run.getRoute(), ga_filename);
-            bSolve = true;
-        }
+//        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) >= INF) {
+//            printf("No LP Solve!\n");
+//
+//            bSolve = false;
+//        }
+//        else {
+//            write_result(ga_run.getRoute(), ga_filename);
+//            bSolve = true;
+//        }
     }
 
     // ----已测试----
@@ -737,7 +737,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;

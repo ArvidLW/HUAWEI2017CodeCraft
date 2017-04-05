@@ -342,19 +342,19 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 64;
+            ga_size = 80;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 36;
+            ga_size = 50;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            ga_size = 25;
+            ga_size = 30;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 16;
+            ga_size = 20;
         }
         else {
-            ga_size = 9;
+            ga_size = 12;
         }
 
         // 同等级基因大小的群体的衰减率
@@ -414,15 +414,15 @@ public:
         std::cout<<"GA length:"<<ga_target_size<<std::endl;
 
         //ZKW ga_run;
-        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) >= INF) {
-            printf("No LP Solve!\n");
-
-            bSolve = false;
-        }
-        else {
-            write_result(ga_run.getRoute(), ga_filename);
-            bSolve = true;
-        }
+//        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) >= INF) {
+//            printf("No LP Solve!\n");
+//
+//            bSolve = false;
+//        }
+//        else {
+//            write_result(ga_run.getRoute(), ga_filename);
+//            bSolve = true;
+//        }
     }
 
     // ----已测试----
