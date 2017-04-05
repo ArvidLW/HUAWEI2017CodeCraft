@@ -50,7 +50,12 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 //        }
 //    }
 
-    OurGA1 ourGA = OurGA1(filename);
+//    OurGA1 ourGA = OurGA1(filename);
+//    if (ourGA.bSolve) {
+//        ourGA.GaAlgorithmServer();
+//    }
+
+    OurGA2 ourGA = OurGA2(filename);
     if (ourGA.bSolve) {
         ourGA.GaAlgorithmServer();
     }

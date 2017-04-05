@@ -69,7 +69,9 @@ char splitLine[]="---------------------------------split line-------------------
 
 #include "WeMCMF.h"         //4.2 MCMF优化
 #include "WEMCMF1.h"
+#include "WeFastMCMF.h"
 #include "ga.h"
 #include "ga1.h"
+#include "ga2.h"
 
 #endif //CDN_COMMON_H

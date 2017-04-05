@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef CDN_GA_H
-#define CDN_GA_H
+#ifndef CDN_GA2_H
+#define CDN_GA2_H
 
 
 #define MAX_COST 1e8
@@ -22,7 +22,7 @@
 
 
 // 遗传算法实现函数
-class OurGA {
+class OurGA2 {
 private:
     // 默认初始化参数
 
@@ -31,8 +31,8 @@ private:
     int ga_size; // 种群大小 2048
 
     // 初始化优秀基因与劣等基因变异率
-    double ga_init_good_rate = 0.05f;
-    double ga_init_bad_rate = 0.10f;
+    double ga_init_good_rate = 0.20f;
+    double ga_init_bad_rate = 0.05f;
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
 
@@ -43,35 +43,35 @@ private:
     int memory_size_g; // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
 
     float ga_elitism_rate = 0.25f; // 精英比率 0.10f
-    int decay_e_step = 2; // 多少步进行精英增加以及变异率增加 10
+    int decay_e_step = 1; // 多少步进行精英增加以及变异率增加 10
     double decay_e_rate;  // 不同等级基因大小的群体的衰减率
     int esize; // 精英在群体中的数量ga_size*ga_elitism_rate_now
 
     double decay_m_rate = 0.99;
-    int mutate_step = 2; // 多少步后不同阶层个体突变情况的变化 10
+    int mutate_step = 1; // 多少步后不同阶层个体突变情况的变化 10
     float ga_mutation_rate  = 0.25f; // 变异率 0.25f
     float ga_mutation; // 基因变异码
 
-    int init_mutation_nums = 100; // 初始基因点位可变异数目
+    int init_mutation_nums = 50; // 初始基因点位可变异数目
     int min_mutation_nums = 2;
     int decay_mutation_ga = 1;
 
     // 突变与精英率每次衰减率值
-    float decay_rate = 0.10;
+    float decay_rate = 0.05;
 
     // 全局步骤
     int ga_step;
 
     // 等级演化初始分布
     // 正向递减high=30--->high_line=10;middle=70+++>middle_line=90.所以中间模糊基因段变异概率会慢慢变大
-    int high = 30;
-    int middle = 60;
-    int high_line = 20;
+    int high = 40;
+    int middle = 80;
+    int high_line = 30;
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
     bool hm_flag = false;
-    int hm_line_high = 25;
-    int hm_line_middle = 85;
+    int hm_line_high = 50;
+    int hm_line_middle = 80;
     int step_begin = 0;
     int steps_stop = 1;
 
@@ -100,7 +100,7 @@ private:
     // 求解最小费用流
     //ZKW ga_run;
     //MCMF ga_run;
-    WeMCMF ga_run;
+    WeFastMCMF ga_run;
 
     // 遗传算法结构体，包括适应与最优解
     struct ga_struct {
@@ -185,7 +185,6 @@ public:
     int binary_search_two(std::vector<int> bs_serverID, double one_minicost, int low, int high) {
         std::vector<int> find_line_bs;
         double minicost_bs = INF;
-        double min_cost = INF;
         int i = 0; // 用于提前终止二维搜索
         //如果无法找到解，那么默认为(high+low)/2
         int real_middle = -1;
@@ -210,11 +209,7 @@ public:
             }else {
                 // 比one_minicost大，可能包含太多最优解集，向左搜索
                 high=middle-1;
-
-                if (min_cost > minicost_bs) {
-                    min_cost = minicost_bs;
-                    real_middle = middle;
-                }
+                real_middle = high+1;
             }
 
             // 迭代次数统计
@@ -274,7 +269,7 @@ public:
             if (size_find_line_one == -1) {
                 std::cout<<"May be Original LP parameter is not suitable, I will use half of length!\n"<<std::endl;
                 std::cout<<"Warning, This may be cause some problem, Please check it again!\n"<<std::endl;
-                size_find_line_one = size_Id_tmp + (ga_wk_tmp.size()-size_Id_tmp-size_Possible_tmp) / 2;
+                size_find_line_one = size_Id_tmp + ((ga_wk_tmp.size()-size_Id_tmp)>>1);
             }
 
             // 将第一条线的元素还原ChooseServer::serverID
@@ -304,14 +299,13 @@ public:
         int size_find_line_two = ga_wk_tmp.size();
 
         // 开始第二条线的二分一维搜索
-        //size_find_line_two = binary_search_two(ga_wk_tmp, minicost_tmp_two, size_find_line_one, size_find_line_two);
-        size_find_line_two = -1;
+        size_find_line_two = binary_search_two(ga_wk_tmp, minicost_tmp_two, size_find_line_one, size_find_line_two);
 
         // 做边界处理
         if (size_find_line_two == size_find_line_one || size_find_line_two == ga_wk_tmp.size()
             || size_find_line_two == -1) {
             std::cout<<"Can't solve the second line, I will get half of the length!\n"<<std::endl;
-            size_find_line_two = size_find_line_one + (ga_wk_tmp.size()-size_find_line_one) / 2;
+            size_find_line_two = (size_find_line_one + ga_wk_tmp.size()) / 2;
         }
 
         // 将第二条线的元素还原serverPossible
@@ -343,32 +337,32 @@ public:
 
     // ----已测试----
     // 初始化化参数
-    OurGA(char *filename) {
+    OurGA2(char *filename) {
         std::cout<<"使用GA默认初始参数！"<<std::endl;
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 100;
+            ga_size = 64;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 80;
+            ga_size = 36;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            ga_size = 50;
+            ga_size = 25;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 30;
+            ga_size = 16;
         }
         else {
-            ga_size = 20;
+            ga_size = 9;
         }
 
         // 同等级基因大小的群体的衰减率
         if (ga_target_size < 100) {
-            decay_e_rate = 0.80;
+            decay_e_rate = 0.70;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            decay_e_rate = 0.80;
+            decay_e_rate = 0.75;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
             decay_e_rate = 0.80;
@@ -377,7 +371,7 @@ public:
             decay_e_rate = 0.85;
         }
         else {
-            decay_e_rate = 0.85;
+            decay_e_rate = 0.90;
         }
 
         // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
@@ -426,7 +420,7 @@ public:
             bSolve = false;
         }
         else {
-            //write_result(ga_run.getRoute(), ga_filename);
+            write_result(ga_run.getRoute(), ga_filename);
             bSolve = true;
         }
     }
@@ -434,7 +428,7 @@ public:
     // ----已测试----
     // 初始化函数
     // 备注，暂时不用
-    OurGA(int size, int max_iterate, float elitism_rate, float mutation_rate) {
+    OurGA2(int size, int max_iterate, float elitism_rate, float mutation_rate) {
         ga_size = size;
         ga_max_iterate = max_iterate;
         ga_elitism_rate = elitism_rate;
@@ -516,25 +510,26 @@ public:
             citizen.str.erase();
 
             // 初始化个体基因
-            if (i == 0 || i == 1) {
+            if (i == 0) {
                 // 将最优个体基因加入种群
                 for (int j=0; j<ga_target_size; j++) {
                     citizen.str += std::to_string(1);
                 }
+                ga_s.clear();
+                ga_s = citizen.str;
 
                 // 将基因存入str_memory
                 insert_string_memory(citizen.str);
             }
-            else if (i == 2) {
+            else if (i == 1) {
                 // 将最优个体基因加入种群
                 for (int j=0; j<size_Id_server; j++) {
                     citizen.str += std::to_string(1);
                 }
                 for (int k=size_Id_server; k<ga_target_size; k++) {
-                    citizen.str += std::to_string(0);
+                    citizen.str += std::to_string(1);
                 }
 
-                // 保存最优解到全局ga_s
                 ga_s.clear();
                 ga_s = citizen.str;
 
@@ -750,6 +745,8 @@ public:
 
     // ----已测试----
     // 基因解码
+    // ----已测试----
+    // 基因解码
     void decode() {
         // 清空服务器节点放置缓存
         std::vector <int>().swap(ChooseServer::serverID);
@@ -767,7 +764,7 @@ public:
                 write_result(ga_run.getRoute(),ga_filename);
             }
 
-            //ga_run.clearData(ga_run1.s);
+            //ga_run1.clearData(ga_run1.s);
         }
         else {
             std::cout<<"Code is Error Error, Please check it!\n"<<std::endl;
@@ -923,4 +920,80 @@ public:
 };
 
 
-#endif //CDN_GA_H
+
+///**
+// * 存储任意两点之间的距离和路径，Floyd算法
+// * */
+//int VertexCost[MAXNODE][MAXNODE];
+//int VertexPath[MAXNODE][MAXNODE];
+//std::vector<int> getPath;
+//
+//
+//struct GA {
+//    // Floyd计算任意两点之间的距离
+//    int ComputeCost(Arc *gMatrix[][MAXNODE], int vexNum);
+//
+//    // 递归寻路
+//    void  Prn_Pass(int j , int k);
+//    // 获取两点之间的路径
+//    bool GetPath(int i, int j);
+//};
+//
+//
+//int GA::ComputeCost(Arc *gMatrix[][MAXNODE], int vexNum) {
+//    for (int i = 0;i < vexNum;i++) {
+//        for (int j = 0;j < vexNum;j++) {
+//            if (i == j) {
+//                VertexCost[i][j] = 0;
+//            }
+//            else if(gMatrix[i][j] != nullptr) {
+//                VertexCost[i][j] = (gMatrix[i][j]->capacity) * (gMatrix[i][j]->cost);
+//            }
+//            else {
+//                VertexCost[i][j] = MAX_COST;
+//            }
+//            VertexPath[i][j] = -1;
+//        }
+//    }
+//
+//    //关键代码部分
+//    for (int k = 0;k < vexNum;k++) {
+//        for (int i = 0;i < vexNum;i++) {
+//            for (int j = 0;j < vexNum;j++) {
+//                if (VertexCost[i][k] + VertexCost[k][j] < VertexCost[i][j]) {
+//                    VertexCost[i][j] = VertexCost[i][k] + VertexCost[k][j];
+//                    VertexPath[i][j] = k;
+//                }
+//            }
+//        }
+//    }
+//
+//    return 0;
+//}
+//
+//// 获取两点之间的路径
+//void  GA::Prn_Pass(int j , int k) {
+//    if (VertexPath[j][k]!=-1) {
+//        Prn_Pass(j,VertexPath[j][k]);
+//        std::cout<<"-->"<<VertexPath[j][k];
+//        getPath.push_back(VertexPath[j][k]);
+//        Prn_Pass(VertexPath[j][k],k);
+//    }
+//}
+//
+//bool GA::GetPath(int i, int j) {
+//    std::cout<<i<<"到"<<j<<"的最短路径为:";
+//    std::cout<<i;
+//    Prn_Pass(i, j);
+//    std::cout<<"-->"<<j<<std::endl;
+//    std::cout<<"最短路径长度为:"<<VertexCost[i][j]<<std::endl;
+//
+//    if (!getPath.empty()) {
+//        return false;
+//    }
+//
+//    return true;
+//}
+
+
+#endif //CDN_GA2_H
