@@ -342,16 +342,16 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 64;
+            ga_size = 80;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 36;
+            ga_size = 50;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            ga_size = 25;
+            ga_size = 32;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            ga_size = 16;
+            ga_size = 9;
         }
         else {
             ga_size = 9;
@@ -376,19 +376,19 @@ public:
 
         // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
         if (ga_target_size < 100) {
-            memory_size_g = 1200;
+            memory_size_g = 360;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            memory_size_g = 1000;
+            memory_size_g = 250;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            memory_size_g = 800;
+            memory_size_g = 160;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            memory_size_g = 600;
+            memory_size_g = 90;
         }
         else {
-            memory_size_g = 500;
+            memory_size_g = 40;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
@@ -900,7 +900,7 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 2000) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 8000) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
