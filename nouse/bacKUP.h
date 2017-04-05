@@ -28,15 +28,6 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
     ChooseServer::lpChoose();//线性规划选择服务器
     //ChooseServer::printServerInfo();//打印所选服务器信息
 
-/**--------------------------拼接服务器-----------------------------------**/
-    std::vector<int> serverTmp{ChooseServer::serverID};
-    serverTmp.insert(serverTmp.end(),ChooseServer::serverCandidate.begin(),ChooseServer::serverCandidate.end());
-    //ChooseServer::minCostCan=mc.run(Graph::nodeCount,Graph::arcCount,serverTmp);
-    serverTmp.insert(serverTmp.end(),ChooseServer::serverPossible.begin(),ChooseServer::serverPossible.end());
-    //ChooseServer::minCostPos=mc.run(Graph::nodeCount,Graph::arcCount,serverTmp);
-    //ChooseServer::minCost=mc.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
-
-/**-----------------------------------------------------------------**/
 /**--------------------------TEST-----------------------------------**/
 //    //int s[]={0,9,23,42,61,77,86,88,105,125,143,156,176,193,198,201,204,221,233,253,256,267,281,290,304,324,336,356,375,388,391,394,414,416,429,449,454,458,469,477,482,491,507,512,525,537,557,573,590,601,613,628,630,631,642,659,660,671,691,694,700,702,716,731,749,759,771,791};
 //    //int s[]={1,21,52,87,98,105,125,141,154,156,157,171,205,241,244,254,291,308,320,355,364,380,414,451,487,516,553,587,599,615,624,636,647,668,697,706,722,735,762,767,797};
@@ -55,59 +46,56 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 //    minCost=m.run(Graph::nodeCount,Graph::arcCount,serverT);
 
 /**----------------------------------------------------------------**/
-///**---------------------------Ga----------------------------------**/
-//    OurGA ourGA = OurGA(filename);
-//    if (ourGA.bSolve) {
-//        ourGA.GaAlgorithmServer();
-//    }
-/**-------------------------------------------------------------**/
 /**--------------------------WeGa-----------------------------------**/
-    std::vector<int> serverT1;
+    std::vector<int> serverTmp{ChooseServer::serverID};
+    //serverTmp.insert(serverTmp.end(),ChooseServer::serverCandidate.begin(),ChooseServer::serverCandidate.end());
+    //ChooseServer::minCostCan=mc.run(Graph::nodeCount,Graph::arcCount,serverTmp);
+
+    //serverTmp.insert(serverTmp.end(),ChooseServer::serverPossible.begin(),ChooseServer::serverPossible.end());
+    //ChooseServer::minCostPos=mc.run(Graph::nodeCount,Graph::arcCount,serverTmp);
+
+    //ChooseServer::minCost=mc.run(Graph::nodeCount,Graph::arcCount,ChooseServer::serverID);
+
     //86847,case_x2.txt
-    //std::string strs{"11111111111111111111111111111111111101111111110000010001000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
-    std::string strs{"11111111111111111111111111110111111110101100100010011000010011000100010000010000000000000000000000000000000100000000000000000000000000000000000000000000000000000100000000"};
-    //std::string strs{"11111111111111111111111111111111111111011111000000011000001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
-    //std::string strs{"11111111111111111111111111111111011100111101010010111100001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
+    std::string strs{"11111111111111111111111111111111111101111111110000010001000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
+    std::vector<int> serverT1;
     for (int i = 0; i <strs.size() ; ++i) {
         if(strs.at(i)=='1'){
             serverT1.push_back(serverTmp[i]);
         }
     }
-    //std::string strs{ourGA.st};
-    //printf("BestGene:\n%s\n",&ourGA.ga_s) ;
-
-//    for (int i = 0; i <ourGA.ga_s.size() ; ++i) {
-//        if(ourGA.ga_s.at(i)=='1'){
-//            serverT1.push_back(serverTmp[i]);
-//        }
-//    }
-
 //
     WeMCMF m;
     minCost=m.run(Graph::nodeCount,Graph::arcCount,serverT1);
-    result=m.getRoute();
     m.clearData();
 
-//    WeMCMF1 m1;
-//    m1.run(Graph::nodeCount,Graph::arcCount,serverT1);
-//    result=m1.getRoute();
-    //m1.clearData(m1.s);
-
+    WeMCMF1 m1;
+    m1.run(Graph::nodeCount,Graph::arcCount,serverT1);
+    m1.getRoute();
+    m1.clearData(m1.s);
     //ZKW zkw1;
     //zkw1.run(Graph::nodeCount,Graph::arcCount,serverT1);
-
+//    printf(splitLine);
+//    printf("minCost: %.f, minCostCan: %.f, minCostPos: %.f\n",ChooseServer::minCost,ChooseServer::minCostCan,ChooseServer::minCostPos);
+//
+//    timer.Begin();//计时开始
 //    WeGa wega(filename);
 //    wega.chooseServer();
 /**-------------------------------------------------------------**/
+/**---------------------------Ga----------------------------------**/
+//    OurGA ourGA = OurGA(filename);
+//    if (ourGA.bSolve) {
+//        ourGA.GaAlgorithmServer();
+//    }
+/**-------------------------------------------------------------**/
 
-
-    printf(splitLine);
-    printf("we get minCost : %.f\n" ,minCost);
-    printf("%s\n",result);
-    //printf("%s\n",m.s);
     //printf(splitLine);
+    printf("we get minCost : %.f\n" ,minCost);
+    printf("%s\n",m1.result);
+    //printf("%s\n",m.s);
+    printf(splitLine);
 
-    write_result(result,filename);
+    //write_result(m1.result,filename);
 
 
 }

@@ -70,7 +70,7 @@ private:
     int steps_stop = 1;
 
     // 保存本次迭代最优基因及其适应度
-    std::string ga_s;
+    //std::string ga_s;
     double ga_minicost = INF;
 
     // 写结果文件
@@ -100,11 +100,13 @@ private:
         std::string str; // 个体基因编码串
         double fitness; // 个体适应度
     };
+
     typedef std::vector<ga_struct> ga_vector;// 合并写法
+
 
 public:
     bool bSolve;
-
+    std::string ga_s;
     // ----已测试----
     // 将下标对应到serverID
     std::vector<int> to_serverID(std::vector<int> tmp_serverID, int middle) {
@@ -396,7 +398,7 @@ public:
             bSolve = false;
         }
         else {
-            write_result(ga_run.getRoute(), ga_filename);
+            //write_result(ga_run.getRoute(), ga_filename);
             bSolve = true;
         }
     }
@@ -666,9 +668,9 @@ public:
 
         if (!ChooseServer::serverID.empty()) {
             //ZKW ga_run;
-            if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) < INF) {
-                write_result(ga_run.getRoute(),ga_filename);
-            }
+//            if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) < INF) {
+//                write_result(ga_run.getRoute(),ga_filename);
+//            }
         }
         else {
             std::cout<<"Code is Error Error, Please check it!\n"<<std::endl;
@@ -764,7 +766,8 @@ public:
         srand(unsigned(time(NULL)));
 
         ga_vector pop_alpha, pop_beta;
-        ga_vector *population, *buffer;
+        ga_vector *population;
+        ga_vector *buffer;
 
         init_population_server(pop_alpha, pop_beta);
 
@@ -818,7 +821,8 @@ public:
             // 交换父子群体
             swap(population, buffer);
         }
-
+        //st=(*population)[0].str;
+        ga_run.clearData();
         return 0;
     }
 };

@@ -46,6 +46,7 @@ struct Node{
     int consumerId;
     int id;
     double require;
+    double mRequire;
     double mCost;
     Arc *mArc;
     Arc *arc;
@@ -181,6 +182,7 @@ void Graph::netNodeBuild(char **topo) {
             ++k;
         }
         netNode[tmp[1]]->require=(double)tmp[2];
+        netNode[tmp[1]]->mRequire=(double)tmp[2];
         allDemand=allDemand+netNode[tmp[1]]->require;
         netNode[tmp[1]]->isWithConsumer=true;
         netNode[tmp[1]]->consumerId=tmp[0];
