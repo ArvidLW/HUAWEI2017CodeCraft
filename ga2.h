@@ -35,6 +35,8 @@ private:
     double ga_init_bad_rate = 0.05f;
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
+    double ga_line_two_minicost = INF;
+    int ga_line_two_middle = -1;
 
     // 用于字符串对比的vector数组
     // 全局变量
@@ -64,14 +66,14 @@ private:
 
     // 等级演化初始分布
     // 正向递减high=30--->high_line=10;middle=70+++>middle_line=90.所以中间模糊基因段变异概率会慢慢变大
-    int high = 40;
-    int middle = 80;
-    int high_line = 30;
+    int high = 30;
+    int middle = 70;
+    int high_line = 10;
     int middle_line = 90;
     // 正向递减high=10+++>high_line=35;middle=90--->middle_line=65.所以中间模糊基因段变异概率会慢慢变小
     bool hm_flag = false;
-    int hm_line_high = 50;
-    int hm_line_middle = 80;
+    int hm_line_high = 35;
+    int hm_line_middle = 65;
     int step_begin = 0;
     int steps_stop = 1;
 
@@ -114,12 +116,11 @@ public:
 
     // ----已测试----
     // 将下标对应到serverID
-    std::vector<int> to_serverID(std::vector<int> tmp_serverID, int middle) {
+    std::vector<int> to_serverID(std::vector<int> tmp_serverID, int start, int end) {
         std::vector<int> done_serverID;
-        int i = 0;
 
-        for (auto tmp = tmp_serverID.begin(); i < middle; ++i, ++tmp) {
-            done_serverID.push_back(*tmp);
+        for (int i = start; i < end; ++i) {
+            done_serverID.push_back(tmp_serverID[i]);
         }
 
         return done_serverID;
@@ -128,35 +129,40 @@ public:
     // ----已测试----
     // 第一条线的二分搜索
     int binary_search_one(std::vector<int> bs_serverID, int low, int high, double *bs_minicost) {
+        // 用于记录最小费用
         std::vector<int> find_line_bs;
-        double minicost_bs = INF;
-        int i = 0; // 用于提前终止二维搜索
-        //如果无法找到解，那么默认为(high+low)/2
-        int real_middle = -1;
+        double minicost_bs;
 
+        // 如果无法找到解，那么默认为(high+low)/2
+        int i = 0; // 用于提前终止二维搜索
+        int real_middle = -1; // 在没有查找到时为-1
+
+        // 开始查找
         while(low<=high){
             //中间位置计算,low+最高位置减去最低位置,右移一位,相当于除2.也可以用(high+low)/2
             int middle=low + ((high-low)>>1);
 
-            //计算此时的耗费
-            std::vector <int>().swap(find_line_bs);
-            find_line_bs = to_serverID(bs_serverID, middle);
-            minicost_bs = INF;
-            minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
-
             // 二维搜索
-            if(i==10) {
-                // 最多二分八次
+            if(i==11) {
+                // 最多二分十次
                 *bs_minicost = ga_line_one_minicost;
 
-                return ga_line_one_middle;
+                return real_middle;
             }
 
+            //计算此时的耗费
+            std::vector <int>().swap(find_line_bs);
+            find_line_bs = to_serverID(bs_serverID, 0, middle);
+            minicost_bs = INF;
+            minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
             if(minicost_bs < INF) {
                 // 有解，向左搜索
                 high=middle-1;
-                real_middle = middle+1;
 
+                // 记录查找找到的位置
+                real_middle = find_line_bs.size();
+
+                // 将查找过程中最小的耗费及服务器vector保存到全局耗费
                 if (ga_line_one_minicost > minicost_bs) {
                     ga_line_one_minicost = minicost_bs;
                     ga_line_one_middle = find_line_bs.size();
@@ -171,11 +177,11 @@ public:
         }
 
         // 迭代资源未用完，代表已精确定位
-        if (i < 10) {
+        if (i < 11) {
             // 精确搜索到
             *bs_minicost = ga_line_one_minicost;
 
-            return ga_line_one_middle;
+            return real_middle;
         }
     }
 
@@ -183,31 +189,40 @@ public:
     // 第二条线的二分搜索
     // 此处需要做边界处理，当minicost_bs的值均为小于或大于one_minicost时取（candidate_size+possible_size）/2
     int binary_search_two(std::vector<int> bs_serverID, double one_minicost, int low, int high) {
+        // 将查找第一分线发现的最小耗费赋值给ga_line_two_minicost
+        ga_line_two_minicost = INF;
+
         std::vector<int> find_line_bs;
         double minicost_bs = INF;
-        int i = 0; // 用于提前终止二维搜索
-        //如果无法找到解，那么默认为(high+low)/2
-        int real_middle = -1;
+        int real_middle = -1; //如果无法找到解，那么默认为(high+low)/2
+
+        // 用于提前终止二维搜索
+        int i = 0;
 
         while(low<=high){
             //中间位置计算,low+最高位置减去最低位置,右移一位,相当于除2.也可以用(high+low)/2
-            int middle=low + ((high-low)>>1);
-
-            //计算此时的耗费
-            find_line_bs = to_serverID(bs_serverID, middle);
-            minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
+            int middle=high - ((high-low)>>1);
 
             // 二维搜索
-            if(i==10) {
+            if(i==11) {
                 // 最多二分八次
                 return real_middle;
             }
 
-            if(minicost_bs < one_minicost) {
-                // 比one_minicost小，可能不包含最优解集，向右搜索
+            //计算此时的耗费
+            find_line_bs = to_serverID(bs_serverID, middle, bs_serverID.size());
+            minicost_bs = ga_run.run(Graph::nodeCount,Graph::arcCount, find_line_bs);
+            if(minicost_bs < INF) {
+                // 有解，向右搜索进行逼近
                 low=middle+1;
+
+                // 将查找过程中最小的耗费及分割点保存到全局耗费
+                if (ga_line_two_minicost > minicost_bs) {
+                    ga_line_two_minicost = minicost_bs;
+                    ga_line_two_middle = find_line_bs.size();
+                }
             }else {
-                // 比one_minicost大，可能包含太多最优解集，向左搜索
+                // 无解，向左搜索逼近
                 high=middle-1;
                 real_middle = high+1;
             }
@@ -217,7 +232,7 @@ public:
         }
 
         // 迭代资源未用完，代表已精确定位
-        if (i < 10) {
+        if (i < 11) {
             // 精确搜索到
             return real_middle;
         }
@@ -240,45 +255,19 @@ public:
         int size_Possible_tmp = ChooseServer::serverPossible.size();
 
         //*******************************第一分线****************************************//
-        // 用于保存第一条线的serverID和数组索引值
-        std::vector<int> find_line_one = ChooseServer::serverID;
-        int size_find_line_one = find_line_one.size();
-
+        // 从高到低找第一分线
+        int size_find_line_one = -1;
         // 计算初始serverID耗费
         double minicost_tmp_one = INF;
-        minicost_tmp_one = ga_run.run(Graph::nodeCount, Graph::arcCount, find_line_one);
+
+        // 查找第一分线位置
+        size_find_line_one = binary_search_one(ga_wk_tmp, 0, ga_wk_tmp.size(), &minicost_tmp_one);
 
         // 开始寻找第一条线
-        if (minicost_tmp_one < INF) {
-            // 在serverID于搜索
-            size_find_line_one = binary_search_one(ChooseServer::serverID, 0, size_Id_tmp, &minicost_tmp_one);
+        if (size_find_line_one == -1) {
+            std::cout<<"No LP solve!\n"<<std::endl;
 
-            // 将第一条线的元素还原
-            std::vector <int>().swap(ChooseServer::serverID);
-            ChooseServer::serverID = to_serverID(ga_wk_tmp, size_find_line_one);
-        }
-        else {
-            // tested, Ling Bao
-            // 注意，此处假设serverID+candidate+possible一定有解，所以不做条件判断
-            //
-
-            // 在candidate和possible搜索，可将candidate与possible合并
-            size_find_line_one = binary_search_one(ga_wk_tmp, size_Id_tmp, ga_wk_tmp.size(), &minicost_tmp_one);
-
-            // 做边界处理
-            if (size_find_line_one == -1) {
-                std::cout<<"May be Original LP parameter is not suitable, I will use half of length!\n"<<std::endl;
-                std::cout<<"Warning, This may be cause some problem, Please check it again!\n"<<std::endl;
-                size_find_line_one = size_Id_tmp + ((ga_wk_tmp.size()-size_Id_tmp)>>1);
-            }
-
-            // 将第一条线的元素还原ChooseServer::serverID
-            std::vector <int>().swap(ChooseServer::serverID);
-            ChooseServer::serverID = to_serverID(ga_wk_tmp, size_find_line_one);
-
-            // 将第一条线的元素还原find_line_one
-            std::vector <int>().swap(find_line_one);
-            find_line_one = to_serverID(ga_wk_tmp, size_find_line_one);
+            return false;
         }
 
         //*******************************第二分线****************************************//
@@ -286,7 +275,7 @@ public:
         //
         //注意：第一条线找到的serverID可能出现minicost=INF的情况（暂时不管）
         //
-        double minicost_tmp_two;
+        double minicost_tmp_two = INF;
         if (minicost_tmp_one < INF) {
             minicost_tmp_two = minicost_tmp_one;
         }
@@ -295,17 +284,30 @@ public:
         }
 
         // 用于保存第二条线的serverID和数组索引值
-        std::vector<int> find_line_two = ga_wk_tmp;
-        int size_find_line_two = ga_wk_tmp.size();
+        int size_find_line_two;
 
         // 开始第二条线的二分一维搜索
-        size_find_line_two = binary_search_two(ga_wk_tmp, minicost_tmp_two, size_find_line_one, size_find_line_two);
+        size_find_line_two = binary_search_two(ga_wk_tmp, minicost_tmp_two, 0, ga_wk_tmp.size());
 
         // 做边界处理
-        if (size_find_line_two == size_find_line_one || size_find_line_two == ga_wk_tmp.size()
-            || size_find_line_two == -1) {
-            std::cout<<"Can't solve the second line, I will get half of the length!\n"<<std::endl;
-            size_find_line_two = (size_find_line_one + ga_wk_tmp.size()) / 2;
+        if (size_find_line_two == -1) {
+            std::cout<<"No LP solve!\n"<<std::endl;
+            return false;
+        }
+        else {
+            if (size_find_line_two < size_find_line_one) {
+                int tmp_line_one = size_find_line_one;
+
+                size_find_line_one = size_find_line_two;
+                size_find_line_two = tmp_line_one;
+            }
+        }
+
+        // 将第一条线的元素还原
+        // serverID
+        std::vector <int>().swap(ChooseServer::serverID);
+        for (int i = 0; i < size_find_line_one; ++i) {
+            ChooseServer::serverID.push_back(ga_wk_tmp[i]);
         }
 
         // 将第二条线的元素还原serverPossible
@@ -342,13 +344,13 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 80;
+            ga_size = 100;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            ga_size = 50;
+            ga_size = 64;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            ga_size = 32;
+            ga_size = 36;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
             ga_size = 9;
@@ -376,19 +378,19 @@ public:
 
         // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
         if (ga_target_size < 100) {
-            memory_size_g = 360;
+            memory_size_g = 1440;
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            memory_size_g = 250;
+            memory_size_g = 1000;
         }
         else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            memory_size_g = 160;
+            memory_size_g = 250;
         }
         else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            memory_size_g = 90;
+            memory_size_g = 49;
         }
         else {
-            memory_size_g = 40;
+            memory_size_g = 25;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
@@ -900,7 +902,7 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 8000) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 800) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
