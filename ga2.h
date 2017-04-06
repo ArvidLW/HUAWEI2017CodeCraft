@@ -711,7 +711,7 @@ public:
 
             // ----已测试----
             // 基因交换(拼接)
-            spos = rand() % ga_target_size;
+            spos = size_Id_server + rand() % (ga_target_size - size_Id_server); // 对交叉点进行控制
             buffer[i].str = population[i1].str.substr(0, spos) +
                             population[i2].str.substr(spos, ga_target_size - spos);
             buffer[i].fitness = INF;
@@ -902,7 +902,7 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 800) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 1500) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
