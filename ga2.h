@@ -30,9 +30,6 @@ private:
     int ga_max_iterate = 32000;	// 最大迭代次数 16384
     int ga_size; // 种群大小 2048
 
-    // 迭代终止次数
-    int step_end_final;
-
     // 初始化优秀基因与劣等基因变异率
     double ga_init_good_rate = 0.20f;
     double ga_init_bad_rate = 0.05f;
@@ -88,8 +85,8 @@ private:
     char *ga_filename;
 
     // 网络相关的动态初始化参数
-    std::vector<int> ga_server = ChooseServer::serverID; // 工作原码
-    int ga_target_size = ChooseServer::serverID.size(); // 工作基因长度
+    std::vector<int> ga_server; // 工作原码
+    int ga_target_size; // 工作基因长度
 
     // 基因片段不同等级划分
     // ServerID
@@ -257,6 +254,10 @@ public:
                          ChooseServer::serverPossible.begin(), ChooseServer::serverPossible.end());
         int size_Possible_tmp = ChooseServer::serverPossible.size();
 
+        // 赋值
+        ga_server = ga_wk_tmp;
+        ga_target_size = ga_wk_tmp.size();
+
         //*******************************第一分线****************************************//
         // 从高到低找第一分线
         int size_find_line_one = -1;
@@ -347,7 +348,7 @@ public:
 
         // 初始化种群大小
         if (ga_target_size < 100) {
-            ga_size = 100;
+            ga_size = 81; // 100
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
             ga_size = 64;
@@ -381,7 +382,7 @@ public:
 
         // 不同等级的基因长度，其大小应不同，越长越不能记忆太多数量
         if (ga_target_size < 100) {
-            memory_size_g = 1440;
+            memory_size_g = 2000; // 1440
         }
         else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
             memory_size_g = 1000;
@@ -394,23 +395,6 @@ public:
         }
         else {
             memory_size_g = 25;
-        }
-
-        // 不同规模基因长度终止条件设置
-        if (ga_target_size < 100) {
-            step_end_final = 500;
-        }
-        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
-            step_end_final = 500;
-        }
-        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
-            step_end_final = 800;
-        }
-        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
-            step_end_final = 1500;
-        }
-        else {
-            step_end_final = 1500;
         }
 
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
@@ -934,7 +918,8 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == step_end_final) {
+            //  || end_steps == 1500
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 1500) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
