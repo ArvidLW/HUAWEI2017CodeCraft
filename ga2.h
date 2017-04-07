@@ -30,6 +30,9 @@ private:
     int ga_max_iterate = 32000;	// 最大迭代次数 16384
     int ga_size; // 种群大小 2048
 
+    // 迭代终止次数
+    int step_end_final;
+
     // 初始化优秀基因与劣等基因变异率
     double ga_init_good_rate = 0.20f;
     double ga_init_bad_rate = 0.05f;
@@ -393,6 +396,23 @@ public:
             memory_size_g = 25;
         }
 
+        // 不同规模基因长度终止条件设置
+        if (ga_target_size < 100) {
+            step_end_final = 500;
+        }
+        else if ((ga_target_size >= 100) && (ga_target_size < 200)) {
+            step_end_final = 500;
+        }
+        else if ((ga_target_size >= 200) && (ga_target_size < 300)) {
+            step_end_final = 800;
+        }
+        else if ((ga_target_size >= 300) && (ga_target_size < 400)) {
+            step_end_final = 1500;
+        }
+        else {
+            step_end_final = 1500;
+        }
+
         // 精英在群体中的数量ga_size*ga_elitism_rate_now
         esize = ceil(ga_size * ga_elitism_rate);
 
@@ -711,9 +731,21 @@ public:
 
             // ----已测试----
             // 基因交换(拼接)
-            spos = size_Id_server + rand() % (ga_target_size - size_Id_server); // 对交叉点进行控制
+            spos = rand() % ga_target_size;
             buffer[i].str = population[i1].str.substr(0, spos) +
                             population[i2].str.substr(spos, ga_target_size - spos);
+
+            // 个体基因随机翻转
+            int rotate_rate = rand() % 100;
+            int rotate_spos = 0;
+            std::string tmp_str_buffer = buffer[i].str;
+            if (rotate_rate > 95) {
+                rotate_spos = rand() % (ga_target_size - size_Id_server);
+                buffer[i].str = tmp_str_buffer.substr(0, size_Id_server) +
+                                tmp_str_buffer.substr(size_Id_server, ga_target_size - size_Id_server - rotate_spos) +
+                                tmp_str_buffer.substr(ga_target_size - size_Id_server - rotate_spos, rotate_spos);
+            }
+
             buffer[i].fitness = INF;
 
             // 基因位变异
@@ -739,7 +771,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
@@ -902,7 +934,7 @@ public:
             print_best(*population);
 
             // ----已测试----
-            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == 1500) {
+            if (((clock() - t0) > TIME_END) || (i == ga_max_iterate-1) || end_steps == step_end_final) {
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
