@@ -287,7 +287,7 @@ void WeFastMCMF::addDeleteSink(std::vector<int> &server) {
         //取消超源
 
         p=Graph::gNet[s][server[i] ];
-        if((int)p->pre==1){
+        if((long)p->pre==1){
             d->arc=p->next;
             p->next->pre=(Arc *)1;
         }
