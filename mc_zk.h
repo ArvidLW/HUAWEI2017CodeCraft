@@ -13,14 +13,22 @@
  */
 #ifndef GLOBAL_H_INCLUDED
 #define GLOBAL_H_INCLUDED
+#include "TimeCalculator.h"
 
 struct Link{
+    Link() : u(-1), v(-1), cap(0), cost(INF),max_(0), next(-1){}
     int u;
     int v;
-    int next;
     double cap;
     double cost;
-    Link():u{-1}, v{-1},next{-1} ,cap{0.0}, cost{INF}  {}
+    double max_;
+    int next;
+    void reload(){
+        u=-1;
+        v=-1;
+        cap=0;
+        cost=INF;
+    }
 };//记录边
 
 struct PRE{
@@ -39,7 +47,7 @@ struct Path{
     Path()
     {
         cost=0;
-        flow=0;
+        flow=INF;
         nodes.clear();
     }
     void Print()
@@ -58,4 +66,9 @@ int sink_p;//超汇点
 int node_num;//网络结点数量
 int link_num;//边数量
 double all_demand;//所有消费结点的总需求
+//TimeCalculator timer;
+int search_edge[1010][1010];
+double gr[1010][1010];
+double search_cost[1010][1010];
+
 #endif // GLOBAL_H_INCLUDED
