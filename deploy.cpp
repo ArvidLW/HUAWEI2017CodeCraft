@@ -37,28 +37,12 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 
     // 遗传算法
     printf(splitLine);
-//    if (ChooseServer::serverID.size() + ChooseServer::serverCandidate.size() + ChooseServer::serverPossible.size() > 300) {
-//        OurGA ourGA = OurGA(filename);
-//        if (ourGA.bSolve) {
-//            ourGA.GaAlgorithmServer();
-//        }
-//    }
-//    else {
-//        OurGA1 ourGA = OurGA1(filename);
-//        if (ourGA.bSolve) {
-//            ourGA.GaAlgorithmServer();
-//        }
-//    }
 
-//    OurGA1 ourGA = OurGA1(filename);
-//    if (ourGA.bSolve) {
-//        ourGA.GaAlgorithmServer();
-//    }
-
-    OurGA2 ourGA = OurGA2(filename);
+    OurGA ourGA = OurGA(filename);
     if (ourGA.bSolve) {
         ourGA.GaAlgorithmServer();
     }
+
 
     printf(splitLine);
     std::cout<<clock() - t0<<std::endl;
