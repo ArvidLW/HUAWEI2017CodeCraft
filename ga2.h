@@ -33,6 +33,7 @@ private:
     // 初始化优秀基因与劣等基因变异率
     double ga_init_good_rate = 0.20f;
     double ga_init_bad_rate = 0.05f;
+    std::vector<int> ga_line_great;
     double ga_line_one_minicost = INF;
     int ga_line_one_middle = -1;
     double ga_line_two_minicost = INF;
@@ -166,6 +167,7 @@ public:
                 if (ga_line_one_minicost > minicost_bs) {
                     ga_line_one_minicost = minicost_bs;
                     ga_line_one_middle = find_line_bs.size();
+                    ga_line_great = find_line_bs;
                 }
             }else {
                 // 无解，向右搜索
@@ -220,6 +222,7 @@ public:
                 if (ga_line_two_minicost > minicost_bs) {
                     ga_line_two_minicost = minicost_bs;
                     ga_line_two_middle = find_line_bs.size();
+                    ga_line_great = find_line_bs;
                 }
             }else {
                 // 无解，向左搜索逼近
@@ -253,10 +256,6 @@ public:
         ga_wk_tmp.insert(ga_wk_tmp.end(),
                          ChooseServer::serverPossible.begin(), ChooseServer::serverPossible.end());
         int size_Possible_tmp = ChooseServer::serverPossible.size();
-
-        // 赋值
-        ga_server = ga_wk_tmp;
-        ga_target_size = ga_wk_tmp.size();
 
         //*******************************第一分线****************************************//
         // 从高到低找第一分线
@@ -346,6 +345,14 @@ public:
     OurGA2(char *filename) {
         std::cout<<"使用GA默认初始参数！"<<std::endl;
 
+        // 网络相关的动态初始化参数
+        ga_server = ChooseServer::serverID;
+        ga_server.insert(ga_server.end(),
+                         ChooseServer::serverCandidate.begin(), ChooseServer::serverCandidate.end());
+        ga_server.insert(ga_server.end(),
+                         ChooseServer::serverPossible.begin(), ChooseServer::serverPossible.end());
+        ga_target_size = ga_server.size();
+
         // 初始化种群大小
         if (ga_target_size < 100) {
             ga_size = 81; // 100
@@ -409,26 +416,18 @@ public:
         // 二分一维搜索重新确定LP的两条线
         finding_boundary();
 
-        // 网络相关的动态初始化参数
-        ChooseServer::serverID.insert(ChooseServer::serverID.end(),
-                                      ga_Candidate_server.begin(), ga_Candidate_server.end());
-        ChooseServer::serverID.insert(ChooseServer::serverID.end(),
-                                      ga_possible_server.begin(), ga_possible_server.end());
-        ga_target_size = ChooseServer::serverID.size();
-        ga_server = ChooseServer::serverID;
-
         std::cout<<"GA length:"<<ga_target_size<<std::endl;
 
         //ZKW ga_run;
-//        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) >= INF) {
-//            printf("No LP Solve!\n");
-//
-//            bSolve = false;
-//        }
-//        else {
-//            write_result(ga_run.getRoute(), ga_filename);
-//            bSolve = true;
-//        }
+        if (ga_run.run(Graph::nodeCount,Graph::arcCount, ga_line_great) >= INF) {
+            printf("No LP Solve!\n");
+
+            bSolve = false;
+        }
+        else {
+            write_result(ga_run.getRoute(), ga_filename);
+            bSolve = true;
+        }
     }
 
     // ----已测试----
@@ -755,7 +754,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
