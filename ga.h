@@ -398,7 +398,7 @@ public:
             bSolve = false;
         }
         else {
-            //write_result(ga_run.getRoute(), ga_filename);
+            write_result(ga_run.getRoute(), ga_filename);
             bSolve = true;
         }
     }
@@ -647,7 +647,7 @@ public:
     // ----已测试----
     // 打印输出本次迭代最好的个体
     inline void print_best(ga_vector &gav) {
-        std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
+        //std::cout << "Best: " << gav[0].str << " (" << gav[0].fitness << ")" << std::endl;
         ga_s.clear();
         ga_s = gav[0].str;
         ga_minicost = gav[0].fitness;
@@ -668,9 +668,9 @@ public:
 
         if (!ChooseServer::serverID.empty()) {
             //ZKW ga_run;
-//            if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) < INF) {
-//                write_result(ga_run.getRoute(),ga_filename);
-//            }
+            if (ga_run.run(Graph::nodeCount,Graph::arcCount, ChooseServer::serverID) < INF) {
+                write_result(ga_run.getRoute(),ga_filename);
+            }
         }
         else {
             std::cout<<"Code is Error Error, Please check it!\n"<<std::endl;
@@ -811,7 +811,7 @@ public:
                 decode();  // 基因解码
                 std::cout<<"基因序列:"<<ga_s<<std::endl;
                 std::cout<<"Ga_Mincost:"<<ga_minicost<<std::endl;
-
+                std::cout<<"运行次数:"<<ga_run.runTimes<<std::endl;
                 return true;
             }
 

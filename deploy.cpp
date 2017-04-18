@@ -56,23 +56,24 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 
 /**----------------------------------------------------------------**/
 ///**---------------------------Ga----------------------------------**/
-//    OurGA ourGA = OurGA(filename);
-//    if (ourGA.bSolve) {
-//        ourGA.GaAlgorithmServer();
-//    }
+    OurGA ourGA = OurGA(filename);
+    if (ourGA.bSolve) {
+        ourGA.GaAlgorithmServer();
+    }
 /**-------------------------------------------------------------**/
 /**--------------------------WeGa-----------------------------------**/
-    std::vector<int> serverT1;
-    //86847,case_x2.txt
-    //std::string strs{"11111111111111111111111111111111111101111111110000010001000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
-    std::string strs{"11111111111111111111111111110111111110101100100010011000010011000100010000010000000000000000000000000000000100000000000000000000000000000000000000000000000000000100000000"};
-    //std::string strs{"11111111111111111111111111111111111111011111000000011000001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
-    //std::string strs{"11111111111111111111111111111111011100111101010010111100001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
-    for (int i = 0; i <strs.size() ; ++i) {
-        if(strs.at(i)=='1'){
-            serverT1.push_back(serverTmp[i]);
-        }
-    }
+//    std::vector<int> serverT1;
+//    //86847,case_x2.txt
+//    //std::string strs{"11111111111111111111111111111111111101111111110000010001000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
+//    std::string strs{"11111111111111111111111111110111111110101100100010011000010011000100010000010000000000000000000000000000000100000000000000000000000000000000000000000000000000000100000000"};
+//    //std::string strs{"11111111111111111111111111111111111111011111000000011000001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
+//    //std::string strs{"11111111111111111111111111111111011100111101010010111100001000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
+//
+//    for (int i = 0; i <strs.size() ; ++i) {
+//        if(strs.at(i)=='1'){
+//            serverT1.push_back(serverTmp[i]);
+//        }
+//    }
     //std::string strs{ourGA.st};
     //printf("BestGene:\n%s\n",&ourGA.ga_s) ;
 
@@ -82,11 +83,11 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 //        }
 //    }
 
-//
-    WeMCMF m;
-    minCost=m.run(Graph::nodeCount,Graph::arcCount,serverT1);
-    result=m.getRoute();
-    m.clearData();
+////
+//    WeMCMF m;
+//    minCost=m.run(Graph::nodeCount,Graph::arcCount,serverT1);
+//    result=m.getRoute();
+//    m.clearData();
 
 //    WeMCMF1 m1;
 //    m1.run(Graph::nodeCount,Graph::arcCount,serverT1);
@@ -101,13 +102,13 @@ void deploy_server(char * topo[MAX_EDGE_NUM], int line_num,char * filename)
 /**-------------------------------------------------------------**/
 
 
-    printf(splitLine);
-    printf("we get minCost : %.f\n" ,minCost);
-    printf("%s\n",result);
-    //printf("%s\n",m.s);
-    //printf(splitLine);
-
-    write_result(result,filename);
+//    printf(splitLine);
+//    printf("we get minCost : %.f\n" ,minCost);
+//    printf("%s\n",result);
+//    //printf("%s\n",m.s);
+//    //printf(splitLine);
+//
+//    write_result(result,filename);
 
 
 }

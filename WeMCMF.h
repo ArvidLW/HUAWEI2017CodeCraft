@@ -40,6 +40,7 @@
 
 struct WeMCMF {
     //兼容
+    int runTimes{0};
     double minicost;
 
     double mCost[MAXNODE];
@@ -70,8 +71,6 @@ struct WeMCMF {
     char* getRoute();
     void deepSearch();
     bool DFS(Arc *p);
-    void addSink_Base(std::vector<int> &server);
-    void addSink_Base0();
     void printVector(std::vector<int> &serverLocation);
     //每次要重置一下数据
     void clearData();
@@ -81,18 +80,6 @@ struct WeMCMF {
         addSink();
     }
 };
-//void WeMCMF::freeSa() {
-//    if(Graph::netNode[sa]){
-//        Arc *p=Graph::netNode[sa]->arc;
-//        Arc *q;
-//        while(p!= nullptr){
-//            q=p->next;
-//            free(p);
-//            p=q;
-//        }
-//    }
-//    free(Graph::netNode[sa]);
-//}
 void WeMCMF::printVector(std::vector<int> &serverLocation) {
     printf(splitLine);
     for(int i=0;i<serverLocation.size();++i){
@@ -136,113 +123,6 @@ void WeMCMF::clearData() {
     Graph::netNode[s]= nullptr;
 }
 
-//char * WeMCMF::getRoute() {
-//    //双向队列模拟一个栈，输出则从头即可
-//    Arc *p=Graph::netNode[s]->arc;
-//    sRoute.push_back(s);
-//    int routeArr[MAXNODE];
-//    int offset{0};
-//    int pathNum=0;
-//    char re[MAX_OUT_CHAR_NUM];
-//    addSink_Base0();
-//    Arc *se=Graph::netNode[s]->arc;
-//    while(se!= nullptr){
-//        se->rCapacity=se->capacity-se->mCapacity;
-//    }
-//    while(p!= nullptr&&DFS(p)){
-////        if(!DFS(p)){
-////            p=p->next;
-////        }
-//        //printf(splitLine);
-//        //printf("times: %d\n",++i);
-//        sRoute.clear();
-//        sRoute.push_back(s);
-//        int n=fRoute.size();
-//        if(n==0){
-//            p=p->next;
-//            continue;
-//        }
-//        memset(routeArr,-1,sizeof(routeArr));
-//        for(int i=0;i<n;++i){
-//            routeArr[i]=fRoute.front();
-//            //printf("%d ,",fRoute.front() );
-//            fRoute.pop_front();
-//        }
-//        double minFTmp=INF;
-//        //查看通过反向边最小流
-//        for(int i=0;i<n-1;++i){
-//            if(minFTmp> Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity){
-//                minFTmp=Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity;
-//            }
-//        }
-//        //减去
-//        //printf("pmCap: %.f , %.f , %.f\n",p->mCapacity,p->rCapacity,Graph::gNet[p->node1][p->node0]->rCapacity);
-//        for(int i=0;i<n-1;++i){
-//            Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity=Graph::gNet[routeArr[i+1] ][routeArr[i] ]->rCapacity - minFTmp;
-//        }
-//        p->rCapacity -=minFTmp;
-//        //倒数第二位上记录消费节点
-//        routeArr[n-1]=Graph::netNode[routeArr[n-2]]->consumerId;
-//        //最后一位上记录流量
-//        if(minFTmp>Graph::netNode[routeArr[n-2]]->require){
-//            //printf("consuemer: %.f\n",Graph::netNode[routeArr[n-1]]->require);
-//            minFTmp=Graph::netNode[routeArr[n-2]]->require;
-//        }
-//        routeArr[n]=minFTmp;
-//        //printf(splitLine);
-//        //printf("route:\n");
-//        for(int i=1;i<n+1;++i){
-//            offset+=sprintf(re+offset,"%d ",routeArr[i]);
-//            //printf("%d , ",routeArr[i]);
-//        }
-//        re[offset-1]='\n';
-//        ++pathNum;
-//        //offset+=sprintf(result+offset,"\n");
-//        //printf("\n");
-//        fRoute.clear();
-//        //如果流量没用完则继续找，否则换下一边
-//        //p->mCapacity=p->mCapacity+minFTmp;
-//        //printf("pmCap: %.f , %.f , %.f\n",p->mCapacity,p->rCapacity,Graph::gNet[p->node1][p->node0]->rCapacity);
-//        //printf("cap: %.f , %.f\n",p->rCapacity,p->mCapacity);
-//        if(p->rCapacity<=0){
-//            p=p->next;
-//        }
-//        //printf("p->next:%d, rcap:%.f\n",p->next->node1,p->rCapacity);
-//    }
-//    re[offset-1]='\0';
-//    char rNumLine[10];
-//    sprintf(rNumLine,"%d\n\n",pathNum);
-//    sprintf(result,"%s%s",rNumLine,re);
-//    //printf("%s",result);
-//    //printf("minCost: %.f\n",minCost);
-//    return result;
-//}
-//bool WeMCMF::DFS(Arc *p) {
-//    //printf("0-enter DFS \n");
-//    bool flag{false};
-//    sRoute.push_back(p->node1);
-//    if(Graph::gNet[p->node1][p->node0]->rCapacity>0 && p->node1==t){
-//        //printf("1----enter DFS \n");
-//        fRoute.assign(sRoute.begin(),sRoute.end());
-//        //printf("2----enter DFS \n");
-//        return true;
-//    } else{
-//        //printf("3----enter DFS \n");
-//        Arc *q=Graph::netNode[p->node1]->arc;
-//        while(q!= nullptr){
-//            // printf("4----enter DFS, %.f \n",q->rCapacity);
-//            if(Graph::gNet[q->node1][q->node0]->rCapacity>0){
-//                flag=DFS(q);
-//                sRoute.pop_back();
-//            }
-//            q=q->next;
-//        }
-//        return flag;
-//    }
-//}
-
-/*-----------------------*/
-
 char * WeMCMF::getRoute() {
     //双向队列模拟一个栈，输出则从头即可
     Arc *p=Graph::netNode[s]->arc;
@@ -251,8 +131,19 @@ char * WeMCMF::getRoute() {
     int offset{0};
     int pathNum=0;
     char re[MAX_OUT_CHAR_NUM];
-    addSink_Base(*lserver);
+    //addSink_Base0();
+    Arc *se=Graph::netNode[s]->arc;
+    while(se!= nullptr){
+        se->rCapacity=se->capacity-se->mCapacity;
+        se=se->next;
+    }
+    for (int i = 0; i < Graph::consumerCount; ++i) {
+
+        Graph::gNet[Graph::consumerNode[i]][t]->rCapacity=Graph::gNet[Graph::consumerNode[i]][t]->capacity - Graph::gNet[Graph::consumerNode[i]][t]->mCapacity;
+
+    }
     while(p!= nullptr&&DFS(p)){
+
 //        if(!DFS(p)){
 //            p=p->next;
 //        }
@@ -306,10 +197,15 @@ char * WeMCMF::getRoute() {
         //p->mCapacity=p->mCapacity+minFTmp;
         //printf("pmCap: %.f , %.f , %.f\n",p->mCapacity,p->rCapacity,Graph::gNet[p->node1][p->node0]->rCapacity);
         //printf("cap: %.f , %.f\n",p->rCapacity,p->mCapacity);
-        if(Graph::gNet[p->node1][p->node0]->rCapacity<=0){
+        if(p->rCapacity<=0){
             p=p->next;
         }
         //printf("p->next:%d, rcap:%.f\n",p->next->node1,p->rCapacity);
+    }
+    for (int i = 0; i < Graph::consumerCount; ++i) {
+
+        Graph::gNet[Graph::consumerNode[i]][t]->mCapacity=Graph::gNet[Graph::consumerNode[i]][t]->capacity;
+
     }
     re[offset-1]='\0';
     char rNumLine[10];
@@ -323,6 +219,7 @@ bool WeMCMF::DFS(Arc *p) {
     //printf("0-enter DFS \n");
     bool flag{false};
     sRoute.push_back(p->node1);
+
     if(Graph::gNet[p->node1][p->node0]->rCapacity>0 && p->node1==t){
         //printf("1----enter DFS \n");
         fRoute.assign(sRoute.begin(),sRoute.end());
@@ -342,6 +239,7 @@ bool WeMCMF::DFS(Arc *p) {
         return flag;
     }
 }
+
 
 void WeMCMF::addServer(std::vector<int> &server) {
     //freeSa();
@@ -433,7 +331,7 @@ double WeMCMF::run(int num1,int num2,std::vector<int> &serverLocation) {
     memset(mCost,0x70, sizeof(mCost));
     memset(pre,-1,sizeof(pre));
     double minFlow;
-    int minFlowLoc;
+    int minFlowLoc{-1};
     //int u=s;
     mCost[s]=0;
     pre[s]=s;
@@ -526,7 +424,7 @@ double WeMCMF::run(int num1,int num2,std::vector<int> &serverLocation) {
             }
         }
 
-        //推入一个离服务器最近的有值节点
+        //推入一个离消费点最近的有值节点
         CTmp=INF;
         CLoc=-1;
         for(int i=0;i<Graph::consumerCount;++i){
@@ -577,7 +475,9 @@ double WeMCMF::run(int num1,int num2,std::vector<int> &serverLocation) {
     //然后设置一个点为起动点供spfa,该点为此次寻找链路的minFlowLoc的后继节点，的前
     minCost=minCost+Graph::serverFee*serverLocation.size();
     minicost=minCost;
-    printf("minCost: %.f\n",minCost);
+    ++runTimes;
+    //printf("runTimes: %d\n",minCost);
+    //printf("minCost: %.f\n",minCost);
     return minCost;
 }
 bool WeMCMF::spfa() {
@@ -674,11 +574,6 @@ void WeMCMF::addSource(int superId,std::vector<int> &server) {
 }
 void WeMCMF::addSink() {
     Graph::netNode[t]=(Node *)calloc(1, sizeof(Node));//superSink,outDegree=0;
-//    Arc *q;
-//    Arc tmp;
-//    q=&tmp;
-
-//    Graph::netNode[t]->arc=tmp.next;
     for(int i=0;i<Graph::consumerCount;++i){
         Arc *p=(Arc *)calloc(1,sizeof(Arc));
         p->node0=Graph::consumerNode[i];
@@ -695,58 +590,5 @@ void WeMCMF::addSink() {
         Graph::gNet[p->node1][p->node0]=p;
         //printf("p.rcap:%.f   ",Graph::gNet[p->node0][p->node1]->rCapacity);
     }
-}
-void WeMCMF::addSink_Base(std::vector<int> &server){
-    Arc *q;
-    Arc tmp;
-    q=&tmp;
-    for (int i = 0; i < Graph::consumerCount; ++i) {
-        Arc *p=(Arc *)calloc(1,sizeof(Arc));
-        p->next= nullptr;
-        p->node0=t;//设置超汇为起点
-        p->node1=Graph::consumerNode[i];//连接消费节点的网络节点
-        p->capacity=Graph::netNode[Graph::consumerNode[i]]->require;
-        p->mCapacity=0;
-        p->rCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
-        p->cost=0;
-        q->next=p;
-        q=q->next;
-        Graph::gNet[p->node0][p->node1]=p;
-    }
-    Graph::netNode[t]->arc=tmp.next;
-
-    //服务器连接超源
-    for (int j = 0; j < server.size() ; ++j) {
-        Arc *p=(Arc *)calloc(1,sizeof(Arc));
-        p->node0=server[j];
-        p->node1=s;
-        p->capacity=INF;
-        p->mCapacity=INF;
-        p->rCapacity=INF-Graph::gNet[s][server[j]]->mCapacity;
-        p->cost=0;
-        p->next=Graph::netNode[server[j]]->arc;
-        Graph::netNode[server[j]]->arc=p;
-        Graph::gNet[p->node0][p->node1]=p;
-    }
-}
-void WeMCMF::addSink_Base0(){
-    Arc *q;
-    Arc tmp;
-    q=&tmp;
-    for (int i = 0; i < Graph::consumerCount; ++i) {
-        Arc *p=(Arc *)calloc(1,sizeof(Arc));
-        p->next= nullptr;
-        p->node0=t;//设置超汇为起点
-        p->node1=Graph::consumerNode[i];//连接消费节点的网络节点
-        p->capacity=Graph::netNode[Graph::consumerNode[i]]->require;
-        p->mCapacity=0;
-        p->rCapacity=Graph::netNode[Graph::consumerNode[i]]->require;
-        p->cost=0;
-        q->next=p;
-        q=q->next;
-        Graph::gNet[p->node0][p->node1]=p;
-    }
-    Graph::netNode[t]->arc=tmp.next;
-
 }
 #endif //CDN_WEMCMF_H
