@@ -35,3 +35,16 @@
 
 4、流计算速度较慢，改成zkw or cs2可能会好些，但是其实如果邻域搜索实现的话，用好局部计算mcmf也是足够快的。
 
+##分支
+
+team memer:bl,lw,sy
+
+blga:主要的提交
+
+master：功能测试与实现
+
+lwFirstMcmf：最后的一个归约，是之前的老版本
+
+simplexlp:线性规划实现测试
+
+symf:sy实现mf的测试
