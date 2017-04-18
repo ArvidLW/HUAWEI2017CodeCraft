@@ -98,9 +98,9 @@ private:
     int size_Possible_server;
 
     // 求解最小费用流
-    ZKW ga_run;
+    //ZKW ga_run;
     //MCMF ga_run;
-    //WeMCMF ga_run;
+    WeMCMF ga_run;
 
     // 遗传算法结构体，包括适应与最优解
     struct ga_struct {

@@ -66,12 +66,12 @@ char splitLine[]="---------------------------------split line-------------------
 
 #include "mc_zk.h"          //4、mcmf和zkw共有头文件
 #include "zkw.h"            //4.2、zkw
-
+#include "best.h"
 #include "WeMCMF.h"         //4.2 MCMF优化
 #include "WEMCMF1.h"
 #include "WeFastMCMF.h"
 #include "ga.h"
 #include "ga1.h"
-#include "ga2.h"
+
 
 #endif //CDN_COMMON_H

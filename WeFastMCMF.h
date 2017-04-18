@@ -59,7 +59,7 @@ struct WeFastMCMF {
     //兼容
     double minicost;
 
-    double mCost[MAXNODE];
+    static double mCost[MAXNODE];
     int pre[MAXNODE];
 
     std::bitset<MAXNODE> isInQue;
@@ -89,7 +89,7 @@ struct WeFastMCMF {
     bool addSpfa(int end);
     //新的超源合并到原有超源；
     void combineSource();
-
+    void bestRe();
 
     void addSink();
     bool spfa(int end);
@@ -108,6 +108,12 @@ struct WeFastMCMF {
         addSink();
     }
 };
+double WeFastMCMF::mCost[MAXNODE];
+void WeFastMCMF::bestRe() {
+    Best best;
+    nowServer=best.getBest(nowServer);
+    run(0,0,nowServer);
+}
 double WeFastMCMF::deleteServer(std::vector<int> &server) {
     memset(mCost,0x70, sizeof(mCost));
     memset(pre,-1,sizeof(pre));
@@ -487,6 +493,7 @@ double WeFastMCMF::addServer(std::vector<int> &server) {
     //推入汇点
     que.push_back(Graph::netNode[sa]->arc);
     mCost[sa]=0;
+
     pre[sa]=sa;
     isInQue.set(sa);
     int minFlowLoc{-1};
@@ -755,6 +762,7 @@ double WeFastMCMF::run(int num1,int num2,std::vector<int> &serverLocation) {
     //然后设置一个点为起动点供spfa,该点为此次寻找链路的minFlowLoc的后继节点，的前
     minCost=minCost+Graph::serverFee*serverLocation.size();
     minicost=minCost;
+    bestRe();
     //printf("minCost: %.f\n",minCost);
     return minCost;
 }
