@@ -37,7 +37,7 @@
 
 ## 分支
 
-team memer:bl,lw,sy
+team members: bl, lw, sy
 
 blga:主要的提交
 
